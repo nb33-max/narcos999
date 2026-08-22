@@ -1,0 +1,38 @@
+{
+  "name": "narcos-bay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "NARCOS BAY — storefront, admin command center, and Telegram bot (Vercel-ready monorepo)",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "vite build frontend",
+    "start": "node backend/server.js",
+    "dev:backend": "node backend/server.js",
+    "bot:webhook": "node backend/scripts/set-webhook.js",
+    "install:all": "npm install && npm --prefix frontend install"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.3",
+    "autoprefixer": "^10.4.20",
+    "lucide-react": "^0.447.0",
+    "postcss": "^8.4.47",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.27.0",
+    "recharts": "^2.13.3",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.10"
+  }
+}

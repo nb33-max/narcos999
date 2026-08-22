@@ -1,0 +1,13 @@
+node_modules/
+.env
+backend/.env
+backend/data/
+backend/uploads/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+dist/
+.DS_Store
+__MACOSX/
+.vercel/
