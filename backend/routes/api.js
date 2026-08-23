@@ -1050,4 +1050,19 @@ router.post('/media/cloudinary/delete', asyncHandler(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Signed direct-to-Cloudinary upload (bypasses Vercel's ~4.5MB body limit
+// for large product videos). The browser uploads straight to Cloudinary
+// using these params; the existing /media/upload endpoint is untouched.
+router.post('/media/sign', requireAdmin, asyncHandler(async (req, res) => {
+  const cloud_name = process.env.CLOUDINARY_CLOUD_NAME;
+  const api_key = process.env.CLOUDINARY_API_KEY;
+  const api_secret = process.env.CLOUDINARY_API_SECRET;
+  if (!cloud_name || !api_key || !api_secret) return res.status(500).json({ error: 'Cloudinary not configured' });
+  const folder = 'narcosbay';
+  const timestamp = Math.floor(Date.now() / 1000);
+  const toSign = `folder=${folder}&timestamp=${timestamp}`;
+  const signature = crypto.createHash('sha1').update(toSign + api_secret).digest('hex');
+  res.json({ cloud_name, api_key, timestamp, signature, folder });
+}));
+
 export default router;

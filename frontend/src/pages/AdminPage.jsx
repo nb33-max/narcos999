@@ -362,6 +362,45 @@ function ProductModal({ product, categories, onClose, onSave, saving }) {
     setTagInput('');
   };
 
+  const DIRECT_LIMIT = 3 * 1024 * 1024;
+
+  const uploadOne = (file, onProgress) => new Promise((resolve, reject) => {
+    const isVideo = (file.type || '').startsWith('video');
+    const xhr = new XMLHttpRequest();
+    const fd = new FormData();
+    xhr.upload.onprogress = onProgress;
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        let res;
+        try { res = JSON.parse(xhr.responseText); } catch { reject(new Error('Bad response')); return; }
+        resolve({ media_type: res.media_type || (isVideo ? 'video' : 'image'), secure_url: res.secure_url });
+      } else {
+        let msg = 'Upload failed';
+        try { const r = JSON.parse(xhr.responseText); msg = (r.error && r.error.message) || r.error || msg; } catch {}
+        reject(new Error(msg));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error'));
+    if (file.size > DIRECT_LIMIT) {
+      apiPost('/media/sign').then((sig) => {
+        if (!sig || !sig.signature || !sig.cloud_name) { reject(new Error('Signing failed')); return; }
+        fd.append('file', file);
+        fd.append('api_key', sig.api_key);
+        fd.append('timestamp', String(sig.timestamp));
+        fd.append('signature', sig.signature);
+        fd.append('folder', sig.folder);
+        xhr.open('POST', `https://api.cloudinary.com/v1_1/${sig.cloud_name}/auto/upload`);
+        xhr.send(fd);
+      }).catch(() => reject(new Error('Signing failed')));
+    } else {
+      fd.append('file', file);
+      xhr.open('POST', '/api/media/upload');
+      const tok = localStorage.getItem('nb_token');
+      if (tok) xhr.setRequestHeader('Authorization', `Bearer ${tok}`);
+      xhr.send(fd);
+    }
+  });
+
   const uploadFiles = (fileList) => {
     const list = Array.from(fileList || []);
     if (!list.length) return;
@@ -371,35 +410,21 @@ function ProductModal({ product, categories, onClose, onSave, saving }) {
     setUploading(true);
     setUploadProgress(0);
     list.forEach((file, fi) => {
-      const fd = new FormData();
-      fd.append('file', file);
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', '/api/media/upload');
-      const tok = localStorage.getItem('nb_token');
-      if (tok) xhr.setRequestHeader('Authorization', `Bearer ${tok}`);
-      xhr.upload.onprogress = (e) => {
+      uploadOne(file, (e) => {
         if (e.lengthComputable) {
           const filePct = Math.round((e.loaded / e.total) * 100);
           setUploadProgress(Math.round(((fi + filePct / 100) / total) * 100));
         }
-      };
-      xhr.onload = () => {
+      }).then((res) => {
+        setMedia((m) => [...m, { media_type: res.media_type, secure_url: res.secure_url, alt_text: '', display_order: m.length + 1, is_primary: m.length === 0 }]);
+      }).catch(() => { failed += 1; }).finally(() => {
         done += 1;
-        if (xhr.status >= 200 && xhr.status < 300) {
-          const res = JSON.parse(xhr.responseText);
-          setMedia((m) => [...m, { media_type: res.media_type, secure_url: res.secure_url, alt_text: '', display_order: m.length + 1, is_primary: m.length === 0 }]);
-        } else failed += 1;
         if (done === total) {
           setUploading(false); setUploadProgress(0);
           if (failed) toast(`${failed} of ${total} files failed`, 'error');
           else toast(total === 1 ? 'Media uploaded' : `${total} files uploaded`, 'success');
         }
-      };
-      xhr.onerror = () => {
-        done += 1; failed += 1;
-        if (done === total) { setUploading(false); setUploadProgress(0); toast(`${failed} of ${total} files failed`, 'error'); }
-      };
-      xhr.send(fd);
+      });
     });
   };
 
