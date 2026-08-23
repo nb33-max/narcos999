@@ -36,6 +36,7 @@ export default function ProductCard({ product }) {
           media[imgIdx % media.length]?.media_type === 'video' ? (
             <video
               src={media[imgIdx % media.length]?.secure_url}
+              poster={media[imgIdx % media.length]?.poster_url}
               className="w-full h-full object-cover"
               muted
               playsInline

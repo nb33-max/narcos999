@@ -115,7 +115,7 @@ export default function ProductPage() {
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}>
             {isVideo ? (
-              <video key={primaryMedia.secure_url} src={primaryMedia.secure_url} controls playsInline preload="metadata" className="w-full h-full object-contain bg-black" />
+              <video key={primaryMedia.secure_url} src={primaryMedia.secure_url} poster={primaryMedia.poster_url} controls playsInline preload="metadata" className="w-full h-full object-contain bg-black" />
             ) : (
               <img src={primaryMedia.secure_url} alt={product.name} className="w-full h-full object-cover" draggable={false} />
             )}
@@ -137,7 +137,7 @@ export default function ProductPage() {
           <div className="flex gap-3 mt-3 overflow-x-auto pb-1">
             {media.map((m, i) => (
               <button key={i} onClick={() => setMediaIdx(i)} className={`relative w-20 h-20 rounded-xl overflow-hidden border-2 bg-subcard shrink-0 transition-all ${mediaIdx === i ? 'border-crimson' : 'border-transparent'}`}>
-                <img src={m.secure_url} alt={m.alt_text || product.name} className="w-full h-full object-cover" />
+                <img src={m.media_type === 'video' ? m.poster_url : m.secure_url} alt={m.alt_text || product.name} className="w-full h-full object-cover" />
                 {m.media_type === 'video' && <span className="absolute inset-0 bg-black/40 flex items-center justify-center text-canvas"><Play size={18} /></span>}
               </button>
             ))}

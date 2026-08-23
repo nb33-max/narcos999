@@ -74,7 +74,7 @@ export default function SearchModal({ open, onClose }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {results.map((p) => (
               <button key={p.id} onClick={() => go(p.slug)} className="flex items-center gap-3 bg-white border border-stone/70 rounded-xl p-2.5 text-left hover:border-crimson/40 hover:shadow-soft transition-all">
-                <img src={p.media?.[0]?.secure_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover bg-subcard shrink-0" />
+                <img src={p.media?.[0]?.media_type === 'video' ? p.media?.[0]?.poster_url : p.media?.[0]?.secure_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover bg-subcard shrink-0" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-pine truncate">{p.name}</p>
                   <p className="text-[11px] text-moss uppercase tracking-wider">{p.category_name || t('product')}</p>

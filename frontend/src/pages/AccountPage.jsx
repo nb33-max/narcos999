@@ -122,7 +122,7 @@ export default function AccountPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {savedItems.map((p) => (
                     <Link key={p.id} to={`/product/${p.slug}`} className="group">
-                      <img src={p.media?.[0]?.secure_url} alt={p.name} className="w-full aspect-square object-cover rounded-xl bg-subcard" />
+                      <img src={p.media?.[0]?.media_type === 'video' ? p.media?.[0]?.poster_url : p.media?.[0]?.secure_url} alt={p.name} className="w-full aspect-square object-cover rounded-xl bg-subcard" />
                       <p className="text-sm font-semibold text-pine mt-2 group-hover:text-crimson transition-colors">{p.name}</p>
                       <p className="text-xs font-bold text-crimson">{formatCurrency(p.price, settings)}</p>
                     </Link>

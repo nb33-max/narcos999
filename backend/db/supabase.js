@@ -51,6 +51,16 @@ export function normalizeMediaUrl(url, mediaType) {
   return url.replace(/\.(mov|webm|m4v)(\?|$)/i, '.mp4$2');
 }
 
+// Cloudinary can deliver a video frame as a JPEG poster for <video poster> and img thumbnails.
+export function videoPosterUrl(url) {
+  if (!url) return url;
+  const m = url.match(/^(https:\/\/res\.cloudinary\.com\/[^/]+\/video\/upload\/)(.*)$/);
+  if (!m) return url;
+  let rest = m[2].replace(/^(f_[a-z0-9]+\/)*/, '');
+  rest = rest.replace(/\.(mp4|mov|webm|m4v|avi|mkv)(\?|$)/i, '.jpg$2');
+  return `${m[1]}so_0.5/f_jpg/${rest}`;
+}
+
 export function shapeProduct(r) {
   if (!r) return null;
   const { categories, product_media, product_pricing_tiers, ...rest } = r;
@@ -59,7 +69,10 @@ export function shapeProduct(r) {
     category: categories || null,
     category_name: categories ? categories.name : null,
     category_slug: categories ? categories.slug : null,
-    media: (Array.isArray(product_media) ? product_media : []).slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map((m) => ({ ...m, secure_url: normalizeMediaUrl(m.secure_url, m.media_type) })),
+    media: (Array.isArray(product_media) ? product_media : []).slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0)).map((m) => {
+      const secure_url = normalizeMediaUrl(m.secure_url, m.media_type);
+      return { ...m, secure_url, poster_url: m.media_type === 'video' ? videoPosterUrl(secure_url) : null };
+    }),
     pricing_tiers: (Array.isArray(product_pricing_tiers) ? product_pricing_tiers : []).slice().sort((a, b) => (a.display_order || 0) - (b.display_order || 0)),
     tags: parseJson(r.tags, []),
   };
