@@ -50,6 +50,21 @@ export function AppProvider({ children }) {
     try { setPaymentMethods(await apiGet('/payment-methods')); } catch {}
   }, []);
 
+  const loadNotifications = useCallback(async () => {
+    if (!getToken()) return;
+    try {
+      const r = await apiGet('/notifications');
+      setNotifications(r.items || []);
+      setUnreadCount(r.unread || 0);
+    } catch {}
+  }, []);
+
+  const markNotificationsRead = useCallback(async (ids) => {
+    try { await apiPost('/notifications/read', { ids }); } catch {}
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -79,22 +94,8 @@ export function AppProvider({ children }) {
     };
   }, [loadSettings, loadNotifications]);
 
-  const loadNotifications = useCallback(async () => {
-    if (!getToken()) return;
+  const trackEvent = useCallback(async (event_type, extra = {}) => {
     try {
-      const r = await apiGet('/notifications');
-      setNotifications(r.items || []);
-      setUnreadCount(r.unread || 0);
-    } catch {}
-  }, []);
-
-  const markNotificationsRead = useCallback(async (ids) => {
-    try { await apiPost('/notifications/read', { ids }); } catch {}
-    setUnreadCount(0);
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  }, []);
-
-  const trackEvent = useCallback(async (event_type, extra = {}) => {    try {
       const sid = getSessionId();
       await apiPost('/analytics/event', {
         session_id: sid,
