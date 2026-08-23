@@ -67,6 +67,10 @@
   70% { transform: rotate(540deg); opacity: 1; }
   100% { transform: rotate(720deg); opacity: 0; }
 }
+@keyframes storyProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
 .story-ring-load {
   position: absolute;
   inset: -3px;

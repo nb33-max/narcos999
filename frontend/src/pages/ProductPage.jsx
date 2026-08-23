@@ -9,6 +9,7 @@ import { useToast } from '../store/ToastContext.jsx';
 import { formatCurrency } from '../lib/format';
 import { t, interpolate } from '../lib/i18n';
 import ProductCard from '../components/ProductCard.jsx';
+import VideoStoryViewer from '../components/VideoStoryViewer.jsx';
 
 export default function ProductPage() {
   const { slug } = useParams();
@@ -18,6 +19,7 @@ export default function ProductPage() {
   const [mediaIdx, setMediaIdx] = useState(0);
   const [tier, setTier] = useState(null);
   const [qty, setQty] = useState(1);
+  const [story, setStory] = useState(null);
   const { settings, trackEvent } = useApp();
   const { addItem } = useCart();
   const { toggle, isSaved } = useWishlist();
@@ -38,7 +40,8 @@ export default function ProductPage() {
   };
 
   const openFullscreen = () => {
-    const el = stageRef.current?.querySelector(isVideo ? 'video' : 'img');
+    if (isVideo) { setStory(primaryMedia); return; }
+    const el = stageRef.current?.querySelector('img');
     if (!el) return;
     const fn = el.requestFullscreen || el.webkitRequestFullscreen;
     if (fn) fn.call(el)?.catch?.(() => {});
@@ -143,6 +146,8 @@ export default function ProductPage() {
             ))}
           </div>
         </div>
+
+        {story && <VideoStoryViewer video={story} title={product.name} onClose={() => setStory(null)} />}
 
         {/* Details */}
         <div>

@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Send, MessageSquare, ShieldAlert, Search, Heart, ShoppingBag, User, Globe, Menu, X } from 'lucide-react';
+import { Send, MessageSquare, ShieldAlert, Search, Heart, ShoppingBag, User, Globe, Menu, X, Bell } from 'lucide-react';
 import { useApp, LANGUAGE_OPTIONS } from '../store/AppContext';
 import { useCart } from '../store/CartContext';
 import { useWishlist } from '../store/WishlistContext';
@@ -14,7 +14,7 @@ const NAV = [
 ];
 
 export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
-  const { settings, cms, user, lang, changeLanguage } = useApp();
+  const { settings, cms, user, lang, changeLanguage, notifications, unreadCount, markNotificationsRead } = useApp();
   const { count } = useCart();
   const { count: savedCount } = useWishlist();
   const navigate = useNavigate();
@@ -89,6 +89,20 @@ export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-crimson text-canvas text-[9px] font-bold rounded-full flex items-center justify-center">{count}</span>
               )}
             </button>
+
+            {user && (
+              <Link
+                to="/account?tab=orders"
+                onClick={() => unreadCount > 0 && markNotificationsRead()}
+                className="relative p-2 text-pine hover:text-crimson transition-colors"
+                aria-label={t('aria_notifications')}
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 bg-crimson text-canvas text-[9px] font-bold rounded-full flex items-center justify-center">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                )}
+              </Link>
+            )}
 
             <button
               onClick={() => (user ? navigate('/account') : onOpenAuth())}

@@ -3,6 +3,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import { supabase, now, parseJson, shapeProduct } from '../db/supabase.js';
 import {
   upsertTelegramUser, setTelegramUserLang, listTelegramUsers, logBroadcast,
+  consumeTelegramLink, setTelegramUserSiteUser,
 } from '../db/local.js';
 import { tLang, interpolateLang, LANGS } from '../../frontend/src/lib/i18n.js';
 
@@ -414,7 +415,19 @@ async function handleText(bot, msg) {
   const lang = st.lang;
 
   if (isAdm && text === '/admin') return showAdminPanel(bot, chatId);
-  if (text === '/start') {
+  if (text.startsWith('/start ')) {
+    const tok = text.slice(7).trim();
+    if (tok.startsWith('nb-')) {
+      const link = await consumeTelegramLink(tok);
+      if (link) {
+        await setTelegramUserSiteUser(chatId, link.user_id);
+        try {
+          await bot.sendMessage(chatId, '✅ Account linked. You will now receive your order updates here.', { parse_mode: 'Markdown' });
+        } catch {}
+      }
+    }
+  }
+  if (text === '/start' || text.startsWith('/start ')) {
     st.stack = [];
     const welcome = tLang(lang, 'bot_welcome_msg');
     if (welcome && welcome !== 'bot_welcome_msg') {
@@ -594,13 +607,18 @@ async function broadcastStory(story) {
   for (const u of users) {
     try {
       if (isVideo) {
-        await b.sendVideo(u.telegram_id, story.media_url, { caption, reply_markup: kb });
+        await b.sendVideo(u.telegram_id, story.media_url, { caption, reply_markup: kb, supports_streaming: true });
       } else {
         await b.sendPhoto(u.telegram_id, story.media_url, { caption, reply_markup: kb });
       }
       sent++;
     } catch {
-      failed++;
+      try {
+        await b.sendDocument(u.telegram_id, story.media_url, { caption, reply_markup: kb });
+        sent++;
+      } catch {
+        failed++;
+      }
     }
   }
   return { sent, failed };
@@ -675,6 +693,15 @@ export async function setupWebhook(url) {
   if (!TOKEN) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
   const b = getBot();
   const clean = String(url || '').replace(/\/+$/, '');
+  if (!clean) {
+    try {
+      await b.deleteWebHook();
+      webhookRegistered = false;
+      return { ok: true, url: '' };
+    } catch (e) {
+      return { ok: false, error: e?.message };
+    }
+  }
   if (!clean.startsWith('https://')) return { ok: false, error: 'Webhook URL must be https' };
   const webhookUrl = `${clean}/api/telegram/webhook`;
   try {
@@ -719,5 +746,48 @@ export async function processUpdate(update) {
 // Expose broadcast for the web admin panel.
 telegramController.broadcast = broadcastMessage;
 telegramController.getUsers = listTelegramUsers;
+
+// ---------- Web-facing helpers (admin panel + order notifications) ----------
+export async function getBotUsername() {
+  if (telegramController.username) return telegramController.username;
+  try {
+    const me = await getBot().getMe();
+    telegramController.username = me.username;
+    return me.username;
+  } catch {
+    return null;
+  }
+}
+
+export async function getWebhookInfo() {
+  if (!TOKEN) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${TOKEN}/getWebhookInfo`);
+    const j = await r.json();
+    return j.ok ? { ok: true, ...(j.result || {}) } : { ok: false, error: j.description };
+  } catch (e) {
+    return { ok: false, error: e?.message };
+  }
+}
+
+export async function sendToChat(chatId, text) {
+  if (!TOKEN || !chatId || !text) return { ok: false };
+  try {
+    await getBot().sendMessage(String(chatId), text, { parse_mode: 'Markdown' });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e?.message };
+  }
+}
+
+export function notifyOrderStatus(chatId, order) {
+  const lines = [
+    `📦 *Order ${order.order_number}*`,
+    `Status: *${order.status}*`,
+  ];
+  if (order.tracking_number) lines.push(`Tracking: \`${order.tracking_number}\``);
+  lines.push('', '🔔 Check your orders on the site for full details.');
+  return sendToChat(chatId, lines.join('\n'));
+}
 
 export { broadcastStory };

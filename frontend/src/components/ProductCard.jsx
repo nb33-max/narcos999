@@ -6,6 +6,7 @@ import { useApp } from '../store/AppContext';
 import { useToast } from '../store/ToastContext';
 import { formatCurrency } from '../lib/format';
 import { t } from '../lib/i18n';
+import VideoStoryViewer from './VideoStoryViewer';
 
 function Badge({ children, color = 'bg-crimson text-canvas' }) {
   return <span className={`pill absolute top-3 left-3 z-10 ${color}`}>{children}</span>;
@@ -16,6 +17,7 @@ export default function ProductCard({ product }) {
   const { toggle, isSaved } = useWishlist();
   const { toast } = useToast();
   const [imgIdx, setImgIdx] = useState(0);
+  const [story, setStory] = useState(null);
   const media = product.media || [];
   const primary = media.find((m) => m.is_primary) || media[0];
   const saved = isSaved(product.id);
@@ -29,14 +31,23 @@ export default function ProductCard({ product }) {
     toast(added ? t('saved_to_wishlist') : t('removed_from_wishlist'), added ? 'success' : 'info');
   };
 
+  const currentMedia = media[imgIdx % media.length];
+
+  const openStory = (e) => {
+    if (!currentMedia || currentMedia.media_type !== 'video') return;
+    e.preventDefault();
+    e.stopPropagation();
+    setStory(currentMedia);
+  };
+
   return (
     <Link to={`/product/${product.slug}`} className="group card overflow-hidden relative block hover:shadow-lift transition-shadow duration-300">
-      <div className="relative aspect-square overflow-hidden bg-subcard" onMouseEnter={() => media.length > 1 && setImgIdx(1)} onMouseLeave={() => setImgIdx(0)}>
+      <div className="relative aspect-square overflow-hidden bg-subcard" onClick={openStory} onMouseEnter={() => media.length > 1 && setImgIdx(1)} onMouseLeave={() => setImgIdx(0)}>
         {media.length > 0 ? (
-          media[imgIdx % media.length]?.media_type === 'video' ? (
+          currentMedia?.media_type === 'video' ? (
             <video
-              src={media[imgIdx % media.length]?.secure_url}
-              poster={media[imgIdx % media.length]?.poster_url}
+              src={currentMedia?.secure_url}
+              poster={currentMedia?.poster_url}
               className="w-full h-full object-cover"
               muted
               loop
@@ -47,7 +58,7 @@ export default function ProductCard({ product }) {
             />
           ) : (
             <img
-              src={media[imgIdx % media.length]?.secure_url}
+              src={currentMedia?.secure_url}
               alt={product.name}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
@@ -61,7 +72,7 @@ export default function ProductCard({ product }) {
         {!product.best_seller && !product.new_arrival && product.featured && <Badge color="bg-pine text-canvas">{t('featured')}</Badge>}
         {outOfStock && <Badge color="bg-pine/80 text-canvas">{t('out_of_stock')}</Badge>}
 
-        {media.some((m) => m.media_type === 'video') && (
+        {currentMedia?.media_type === 'video' && (
           <span className="absolute top-3 right-3 w-7 h-7 bg-black/50 rounded-full flex items-center justify-center text-canvas"><Play size={13} /></span>
         )}
 
@@ -69,6 +80,8 @@ export default function ProductCard({ product }) {
           <Heart size={16} fill={saved ? 'currentColor' : 'none'} />
         </button>
       </div>
+
+      {story && <VideoStoryViewer video={story} title={product.name} onClose={() => setStory(null)} />}
 
       <div className="p-4">
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-moss">{product.category_name || t('botanical')}</p>

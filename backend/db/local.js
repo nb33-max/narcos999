@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { supabase, uid, now } from './supabase.js';
 
 export { uid, now };
@@ -229,4 +230,94 @@ export async function logBroadcast(message, sentCount, status) {
 export async function listBroadcasts() {
   const { data } = await supabase.from('telegram_broadcasts').select('*').order('created_at', { ascending: false }).limit(100);
   return data || [];
+}
+
+// ---------- Notifications (in-app) ----------
+export async function listNotifications(userId, limit = 50) {
+  const { data } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  return data || [];
+}
+
+export async function countUnreadNotifications(userId) {
+  const { count } = await supabase
+    .from('notifications')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('read', false);
+  return count || 0;
+}
+
+export async function createNotification(n) {
+  const id = n.id || uid();
+  await supabase.from('notifications').insert({
+    id,
+    user_id: n.user_id,
+    type: n.type || 'order',
+    title: n.title || 'Notification',
+    body: n.body || null,
+    order_id: n.order_id || null,
+    link: n.link || null,
+    read: false,
+    created_at: now(),
+  });
+  const { data } = await supabase.from('notifications').select('*').eq('id', id).maybeSingle();
+  return data;
+}
+
+export async function markNotificationsRead(userId, ids) {
+  const q = supabase.from('notifications').update({ read: true }).eq('user_id', userId);
+  if (ids && ids.length) await q.in('id', ids);
+  else await q.eq('read', false);
+  return true;
+}
+
+// ---------- Order comments ----------
+export async function listOrderComments(orderId) {
+  const { data } = await supabase
+    .from('order_comments')
+    .select('*')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true });
+  return data || [];
+}
+
+export async function addOrderComment(c) {
+  const id = uid();
+  await supabase.from('order_comments').insert({
+    id,
+    order_id: c.order_id,
+    author_role: c.author_role || 'admin',
+    author_name: c.author_name || null,
+    message: c.message || '',
+    created_at: now(),
+  });
+  const { data } = await supabase.from('order_comments').select('*').eq('id', id).maybeSingle();
+  return data;
+}
+
+// ---------- Telegram account linking ----------
+export async function createTelegramLink(userId) {
+  const token = 'nb-' + crypto.randomBytes(12).toString('hex');
+  await supabase.from('telegram_links').insert({ token, user_id: userId, created_at: now() });
+  return token;
+}
+
+export async function consumeTelegramLink(token) {
+  const { data } = await supabase.from('telegram_links').select('*').eq('token', token).maybeSingle();
+  if (data) await supabase.from('telegram_links').delete().eq('token', token);
+  return data;
+}
+
+export async function getTelegramUserBySiteUser(userId) {
+  const { data } = await supabase.from('telegram_users').select('*').eq('site_user_id', userId).maybeSingle();
+  return data || null;
+}
+
+export async function setTelegramUserSiteUser(telegramId, userId) {
+  await supabase.from('telegram_users').update({ site_user_id: userId }).eq('telegram_id', String(telegramId));
 }

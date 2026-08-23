@@ -5,6 +5,7 @@ import {
   LogOut, Plus, Pencil, Trash2, X, Search, RefreshCw, Upload, Star, BadgePercent, Truck,
   Eye, EyeOff, ArrowDown, ArrowUp, ShieldCheck, ShieldAlert, CheckCircle2, Circle, Send,
   Filter, Loader2, Lock, ToggleLeft, ToggleRight, User, ExternalLink, FileText, Bot, Film, CreditCard,
+  MessageSquarePlus,
 } from 'lucide-react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
@@ -647,6 +648,22 @@ function OrderDrawer({ order, onClose, onUpdated, settings }) {
   const [tracking, setTracking] = useState(order.tracking_number || '');
   const [pay, setPay] = useState(order.payment_status);
   const [saving, setSaving] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState('');
+
+  useEffect(() => {
+    apiGet(`/orders/${order.id}/comments`).then(setComments).catch(() => {});
+  }, [order.id]);
+
+  const addComment = async () => {
+    if (!commentText.trim()) return;
+    try {
+      await apiPost(`/orders/${order.id}/comments`, { message: commentText.trim() });
+      setCommentText('');
+      setComments(await apiGet(`/orders/${order.id}/comments`));
+      toast('Comment added — customer notified', 'success');
+    } catch { toast('Failed to add comment', 'error'); }
+  };
 
   const submit = async () => {
     setSaving(true);
@@ -736,6 +753,26 @@ function OrderDrawer({ order, onClose, onUpdated, settings }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </section>
+
+          <section>
+            <h3 className="field-heading">Customer Updates</h3>
+            <div className="space-y-2">
+              {comments.length === 0 && <p className="text-xs text-moss">No comments yet. Add a visible update for the customer below.</p>}
+              {comments.map((c) => (
+                <div key={c.id} className="bg-subcard rounded-lg px-3 py-2 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase text-crimson">{c.author_name || 'Admin'}</span>
+                    <span className="text-[10px] text-moss/60 font-mono">{formatDate(c.created_at)}</span>
+                  </div>
+                  <p className="text-moss mt-0.5">{c.message}</p>
+                </div>
+              ))}
+              <div className="flex gap-2 pt-1">
+                <input className="input flex-1" value={commentText} onChange={(e) => setCommentText(e.target.value)} placeholder="Visible to customer — links are clickable…" onKeyDown={(e) => e.key === 'Enter' && addComment()} />
+                <button onClick={addComment} disabled={!commentText.trim()} className="btn-primary !py-2 text-[10px] whitespace-nowrap"><MessageSquarePlus size={14} /> ADD</button>
+              </div>
             </div>
           </section>
 

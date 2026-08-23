@@ -25,6 +25,8 @@ export function AppProvider({ children }) {
   const [stories, setStories] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState({});
   const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [availability, setAvailability] = useState({ allowed: true });
   const [lang, setLangState] = useState(getLang());
   const [loading, setLoading] = useState(true);
@@ -67,14 +69,32 @@ export function AppProvider({ children }) {
     }
     const onLang = (e) => setLangState(e.detail);
     window.addEventListener('nb-lang-change', onLang);
+    const pollTimer = setInterval(() => {
+      if (getToken()) loadNotifications();
+    }, 20000);
     return () => {
       cancelled = true;
+      clearInterval(pollTimer);
       window.removeEventListener('nb-lang-change', onLang);
     };
-  }, [loadSettings]);
+  }, [loadSettings, loadNotifications]);
 
-  const trackEvent = useCallback(async (event_type, extra = {}) => {
+  const loadNotifications = useCallback(async () => {
+    if (!getToken()) return;
     try {
+      const r = await apiGet('/notifications');
+      setNotifications(r.items || []);
+      setUnreadCount(r.unread || 0);
+    } catch {}
+  }, []);
+
+  const markNotificationsRead = useCallback(async (ids) => {
+    try { await apiPost('/notifications/read', { ids }); } catch {}
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  }, []);
+
+  const trackEvent = useCallback(async (event_type, extra = {}) => {    try {
       const sid = getSessionId();
       await apiPost('/analytics/event', {
         session_id: sid,
@@ -100,8 +120,9 @@ export function AppProvider({ children }) {
     const res = await apiPost('/auth/login', { email, password });
     setToken(res.token);
     setUser(res.user);
+    loadNotifications();
     return res.user;
-  }, []);
+  }, [loadNotifications]);
 
   const register = useCallback(async (payload) => {
     const res = await apiPost('/auth/register', payload);
@@ -121,12 +142,14 @@ export function AppProvider({ children }) {
 
   const value = useMemo(() => ({
     settings, cms, categories, stories, paymentMethods, user, availability, lang, loading,
+    notifications, unreadCount,
     setAvailability, setUser, setCategories, setStories, setPaymentMethods,
-    loadStories, loadPaymentMethods,
+    loadStories, loadPaymentMethods, loadNotifications, markNotificationsRead,
     login, register, logout, trackEvent, changeLanguage, loadSettings,
     setSettings, setCms,
   }), [settings, cms, categories, stories, paymentMethods, user, availability, lang, loading,
-      login, register, logout, trackEvent, changeLanguage, loadSettings, loadStories, loadPaymentMethods]);
+      notifications, unreadCount, login, register, logout, trackEvent, changeLanguage, loadSettings,
+      loadStories, loadPaymentMethods, loadNotifications, markNotificationsRead]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

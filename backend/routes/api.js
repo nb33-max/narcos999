@@ -6,8 +6,11 @@ import {
   listStories, listActiveStories, getStory, insertStory, updateStory, deleteStory, toggleStoryLike,
   listPaymentEntries, listActivePaymentEntries, insertPaymentEntry, updatePaymentEntry, deletePaymentEntry,
   listTelegramUsers,
+  listNotifications, createNotification, markNotificationsRead,
+  listOrderComments, addOrderComment,
+  createTelegramLink, getTelegramUserBySiteUser,
 } from '../db/local.js';
-import { telegramController, broadcastStory, processUpdate, setupWebhook } from '../telegram/bot.js';
+import { telegramController, broadcastStory, processUpdate, setupWebhook, getWebhookInfo, getBotUsername, sendToChat, notifyOrderStatus } from '../telegram/bot.js';
 import { signToken } from '../lib/auth.js';
 
 const router = Router();
@@ -470,7 +473,67 @@ router.put('/orders/:id/status', asyncHandler(async (req, res) => {
     updated_at: now(),
   }).eq('id', row.id).select('*').single();
   if (error) throw error;
-  res.json(parseOrder(data));
+  const updated = parseOrder(data);
+
+  // Notify the customer: in-app notification + Telegram (if linked).
+  if (row.user_id) {
+    const title = `Order ${row.order_number} · ${newStatus}`;
+    const body = note || `Your order ${row.order_number} is now ${newStatus}.`;
+    try {
+      await createNotification({ user_id: row.user_id, type: 'order', title, body, order_id: row.order_number, link: '/account?tab=orders' });
+    } catch {}
+    try {
+      const tg = await getTelegramUserBySiteUser(row.user_id);
+      if (tg) await notifyOrderStatus(tg.telegram_id, updated);
+    } catch {}
+  }
+
+  res.json(updated);
+}));
+
+// ---------- Order comments ----------
+router.get('/orders/:id/comments', requireAuth, asyncHandler(async (req, res) => {
+  let row = (await supabase.from('orders').select('id, user_id, customer_email').eq('id', req.params.id).maybeSingle()).data;
+  if (!row) row = (await supabase.from('orders').select('id, user_id, customer_email').eq('order_number', req.params.id).maybeSingle()).data;
+  if (!row) return res.status(404).json({ error: 'Order not found' });
+  const isAdmin = await isAdmin(req);
+  if (!isAdmin && row.user_id !== req.user.id && row.customer_email !== req.user.email) return res.status(403).json({ error: 'Not your order' });
+  res.json(await listOrderComments(row.id));
+}));
+
+router.post('/orders/:id/comments', requireAdmin, asyncHandler(async (req, res) => {
+  const { message } = req.body || {};
+  if (!message || !message.trim()) return res.status(400).json({ error: 'message is required' });
+  let row = (await supabase.from('orders').select('id').eq('id', req.params.id).maybeSingle()).data;
+  if (!row) row = (await supabase.from('orders').select('id').eq('order_number', req.params.id).maybeSingle()).data;
+  if (!row) return res.status(404).json({ error: 'Order not found' });
+  const admin = await req.getAuth();
+  const comment = await addOrderComment({ order_id: row.id, author_role: 'admin', author_name: admin?.full_name || 'Admin', message: message.trim() });
+  res.status(201).json(comment);
+}));
+
+// ---------- Notifications ----------
+router.get('/notifications', requireAuth, asyncHandler(async (req, res) => {
+  const items = await listNotifications(req.user.id);
+  res.json({ items, unread: items.filter((n) => !n.read).length });
+}));
+
+router.post('/notifications/read', requireAuth, asyncHandler(async (req, res) => {
+  const { ids } = req.body || {};
+  await markNotificationsRead(req.user.id, Array.isArray(ids) ? ids : []);
+  res.json({ ok: true });
+}));
+
+// ---------- Telegram account linking ----------
+router.post('/account/telegram-link', requireAuth, asyncHandler(async (req, res) => {
+  const tg = await getTelegramUserBySiteUser(req.user.id);
+  const username = await getBotUsername();
+  if (tg) {
+    res.json({ linked: true, telegram_id: tg.telegram_id, username });
+    return;
+  }
+  const token = await createTelegramLink(req.user.id);
+  res.json({ linked: false, token, url: username ? `https://t.me/${username}?start=${token}` : null });
 }));
 
 // ---------- Promotions ----------
@@ -600,6 +663,17 @@ const requireAdmin = async (req, res, next) => {
   }
 };
 
+const requireAuth = async (req, res, next) => {
+  try {
+    const u = await req.getAuth();
+    if (!u) return res.status(401).json({ error: 'Authentication required' });
+    req.user = u;
+    next();
+  } catch {
+    res.status(500).json({ error: 'Auth check failed' });
+  }
+};
+
 // ---------- Stories ----------
 router.get('/stories/active', asyncHandler(async (req, res) => {
   res.json(await listActiveStories(typeof req.query.viewer === 'string' ? req.query.viewer : null));
@@ -687,14 +761,19 @@ router.post('/telegram/set-webhook', requireAdmin, asyncHandler(async (req, res)
 }));
 
 router.get('/telegram/status', requireAdmin, async (req, res) => {
-  const users = await listTelegramUsers();
-  res.json({
-    status: telegramController.status,
-    username: telegramController.username,
-    error: telegramController.error,
-    last_start: telegramController.lastStart,
-    user_count: users.length,
-  });
+  try {
+    const [users, webhook] = await Promise.all([listTelegramUsers(), getWebhookInfo()]);
+    res.json({
+      status: telegramController.status,
+      username: telegramController.username,
+      error: telegramController.error,
+      last_start: telegramController.lastStart,
+      user_count: users.length,
+      webhook,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e?.message });
+  }
 });
 
 router.get('/telegram/users', requireAdmin, async (req, res) => {

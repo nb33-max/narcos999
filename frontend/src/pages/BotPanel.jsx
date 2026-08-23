@@ -37,6 +37,7 @@ function BotPanelBody() {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [webhookBusy, setWebhookBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -46,6 +47,16 @@ function BotPanelBody() {
     finally { setLoading(false); }
   }, [toast]);
   useEffect(() => { load(); }, [load]);
+
+  const registerWebhook = async (clear) => {
+    setWebhookBusy(true);
+    try {
+      const res = await apiPost('/telegram/set-webhook', clear ? { url: '' } : {});
+      if (res.ok) { toast(clear ? 'Webhook cleared' : 'Webhook registered — bot is now always-on', 'success'); load(); }
+      else toast(res.error || 'Webhook failed', 'error');
+    } catch { toast('Webhook request failed', 'error'); }
+    finally { setWebhookBusy(false); }
+  };
 
   const send = async () => {
     if (!text.trim()) { toast('Message is empty', 'error'); return; }
@@ -61,6 +72,8 @@ function BotPanelBody() {
   if (loading) return <div className="py-20 text-center"><Loader2 size={26} className="animate-spin text-moss mx-auto" /></div>;
 
   const live = status?.status === 'running';
+  const wh = status?.webhook || {};
+  const whRegistered = !!wh.url;
 
   return (
     <div className="min-h-screen bg-subcard/40">
@@ -104,6 +117,37 @@ function BotPanelBody() {
               <p className="text-[11px] text-moss mt-1">{status?.last_start?.slice(0, 10) || 'never'}</p>
             </div>
             <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#F59E0B' + '14', color: '#F59E0B' }}><Send size={18} /></div>
+          </div>
+        </div>
+
+        <div className="card p-5 mt-5">
+          <h3 className="field-heading flex items-center gap-2"><ShieldCheck size={15} className="text-crimson" /> Webhook — Always-On Mode</h3>
+          <p className="text-[11px] text-moss mb-3">
+            In production the bot runs on a Telegram webhook (no process to keep alive). Register it once here and the bot stays online 24/7.
+            {!whRegistered && ' It is currently not registered — the bot is offline.'}
+          </p>
+          <div className="bg-subcard rounded-lg p-4 space-y-2 text-sm">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-moss">Webhook URL</span>
+              {whRegistered
+                ? <span className="pill bg-emerald-500/10 text-emerald-600"><ShieldCheck size={11} /> REGISTERED</span>
+                : <span className="pill bg-red-500/10 text-red-600">NOT REGISTERED</span>}
+            </div>
+            <p className="font-mono text-xs text-pine break-all">{wh.url || '—'}</p>
+            {wh.pending_update_count !== undefined && (
+              <p className="text-[11px] text-moss">Pending updates: <span className="font-bold text-pine">{wh.pending_update_count}</span></p>
+            )}
+            {wh.last_error_message && (
+              <p className="text-[11px] text-crimson">Last error: {wh.last_error_message}</p>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <button onClick={() => registerWebhook(false)} disabled={webhookBusy || whRegistered} className="btn-primary !py-2.5">
+              {webhookBusy ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />} {whRegistered ? 'WEBHOOK REGISTERED' : 'REGISTER WEBHOOK'}
+            </button>
+            {whRegistered && (
+              <button onClick={() => registerWebhook(true)} disabled={webhookBusy} className="btn-outline !py-2.5">CLEAR WEBHOOK</button>
+            )}
           </div>
         </div>
 
