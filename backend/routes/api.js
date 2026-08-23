@@ -654,16 +654,16 @@ async function isAdmin(req) {
   const u = await req.getAuth();
   return u && (u.role === 'ADMIN' || u.role === 'SUPER_ADMIN');
 }
-const requireAdmin = async (req, res, next) => {
+async function requireAdmin(req, res, next) {
   try {
     if (!(await isAdmin(req))) return res.status(403).json({ error: 'Admin access required' });
     next();
   } catch {
     res.status(500).json({ error: 'Auth check failed' });
   }
-};
+}
 
-const requireAuth = async (req, res, next) => {
+async function requireAuth(req, res, next) {
   try {
     const u = await req.getAuth();
     if (!u) return res.status(401).json({ error: 'Authentication required' });
@@ -672,7 +672,7 @@ const requireAuth = async (req, res, next) => {
   } catch {
     res.status(500).json({ error: 'Auth check failed' });
   }
-};
+}
 
 // ---------- Stories ----------
 router.get('/stories/active', asyncHandler(async (req, res) => {
