@@ -39,8 +39,11 @@ export default function ProductCard({ product }) {
               poster={media[imgIdx % media.length]?.poster_url}
               className="w-full h-full object-cover"
               muted
+              loop
               playsInline
               preload="metadata"
+              onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+              onMouseLeave={(e) => { const v = e.currentTarget; v.pause(); v.currentTime = 0; }}
             />
           ) : (
             <img
