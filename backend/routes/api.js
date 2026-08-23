@@ -755,7 +755,7 @@ router.post('/telegram/webhook', asyncHandler(async (req, res) => {
 
 router.post('/telegram/set-webhook', requireAdmin, asyncHandler(async (req, res) => {
   const { url } = req.body || {};
-  const base = (url || '').trim() || `${req.protocol}://${req.get('host')}`;
+  const base = (url || '').trim() || `https://${req.get('host')}`;
   const result = await setupWebhook(base);
   res.json(result);
 }));
