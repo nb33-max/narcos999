@@ -269,6 +269,27 @@ export async function createNotification(n) {
   return data;
 }
 
+export async function listAllUserIds() {
+  const { data } = await supabase.from('users').select('id');
+  return (data || []).map((u) => u.id);
+}
+
+export async function notifyStoryToAll(story) {
+  if (!story) return;
+  const ids = await listAllUserIds();
+  if (!ids.length) return { sent: 0 };
+  const title = story.title || 'New story';
+  const body = [story.caption, story.link_url].filter(Boolean).join(' · ') || null;
+  let sent = 0;
+  for (const userId of ids) {
+    try {
+      await createNotification({ user_id: userId, type: 'story', title, body, link: null });
+      sent += 1;
+    } catch {}
+  }
+  return { sent };
+}
+
 export async function markNotificationsRead(userId, ids) {
   const q = supabase.from('notifications').update({ read: true }).eq('user_id', userId);
   if (ids && ids.length) await q.in('id', ids);

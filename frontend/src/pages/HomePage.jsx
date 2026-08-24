@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Send, ChevronDown } from 'lucide-react';
+import { ArrowRight, Send, Bot, ChevronDown } from 'lucide-react';
 import SmokeBackground from '../components/SmokeBackground.jsx';
 import ProductCard from '../components/ProductCard.jsx';
 import StoriesRail from '../components/StoriesRail.jsx';
 import { useApp } from '../store/AppContext.jsx';
 import { apiGet } from '../lib/api';
 import { t } from '../lib/i18n';
+import { telegramBotUrl } from '../lib/telegram';
 import { BitcoinIcon, BankIcon, PayPalIcon, GiftCardIcon } from '../components/PaymentIcons.jsx';
 
 const PAYMENTS = [
@@ -124,6 +125,9 @@ export default function HomePage() {
             <p className="text-canvas/80 mt-3 max-w-xl mx-auto text-sm md:text-base">{t('telegram_sub')}</p>
             <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center gap-2 bg-canvas text-pine text-xs font-bold uppercase tracking-[0.14em] px-8 py-4 rounded-full hover:bg-stone transition-colors">
               <Send size={15} /> {settings?.telegram_display_name || 'Narcos Bay'}
+            </a>
+            <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-canvas/70 hover:text-canvas transition-colors">
+              <Bot size={13} /> {t('telegram_bot_chat')}
             </a>
           </div>
         </div>

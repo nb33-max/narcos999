@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Send, Mail, MessageCircle, Clock, Loader2, ShieldAlert } from 'lucide-react';
+import { Send, Mail, MessageCircle, Bot, Clock, Loader2, ShieldAlert } from 'lucide-react';
 import { apiPost } from '../lib/api';
 import { useToast } from '../store/ToastContext.jsx';
 import { useApp } from '../store/AppContext.jsx';
 import AuthModal from '../components/AuthModal.jsx';
 import { t } from '../lib/i18n';
+import { TELEGRAM_BOT_HANDLE, telegramBotUrl } from '../lib/telegram';
 
 const CATEGORIES = [
   { value: 'Product Inquiry', key: 'subj_product' },
@@ -16,7 +17,7 @@ const CATEGORIES = [
 
 export default function ContactPage() {
   const { toast } = useToast();
-  const { user } = useApp();
+  const { user, settings } = useApp();
   const [authOpen, setAuthOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', order_number: '', category: 'Product Inquiry', subject: '', message: '' });
   const [sending, setSending] = useState(false);
@@ -98,6 +99,9 @@ export default function ContactPage() {
             </a>
             <a href="https://t.me/narcosbay_official" target="_blank" rel="noreferrer" className="flex items-center gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
               <MessageCircle size={16} className="text-crimson" /> @narcosbay_official
+            </a>
+            <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="flex items-center gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
+              <Bot size={16} className="text-crimson" /> @{TELEGRAM_BOT_HANDLE}
             </a>
             <p className="flex items-center gap-3 py-2.5 text-sm font-semibold text-pine"><Clock size={16} className="text-crimson" /> {t('replies_within')}</p>
           </div>

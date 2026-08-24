@@ -6,11 +6,11 @@ import {
   listStories, listActiveStories, getStory, insertStory, updateStory, deleteStory, toggleStoryLike,
   listPaymentEntries, listActivePaymentEntries, insertPaymentEntry, updatePaymentEntry, deletePaymentEntry,
   listTelegramUsers,
-  listNotifications, createNotification, markNotificationsRead,
+  listNotifications, createNotification, markNotificationsRead, notifyStoryToAll,
   listOrderComments, addOrderComment,
   createTelegramLink, getTelegramUserBySiteUser,
 } from '../db/local.js';
-import { telegramController, broadcastStory, processUpdate, setupWebhook, getWebhookInfo, getBotUsername, sendToChat, notifyOrderStatus } from '../telegram/bot.js';
+import { telegramController, processUpdate, setupWebhook, getWebhookInfo, getBotUsername, sendToChat, notifyOrderStatus } from '../telegram/bot.js';
 import { signToken } from '../lib/auth.js';
 
 const router = Router();
@@ -685,7 +685,7 @@ router.get('/stories', requireAdmin, asyncHandler(async (req, res) => {
 
 router.post('/stories', requireAdmin, asyncHandler(async (req, res) => {
   const story = await insertStory(req.body || {});
-  if (story && story.active) broadcastStory(story);
+  if (story && story.active) notifyStoryToAll(story);
   res.status(201).json(story);
 }));
 
@@ -693,7 +693,7 @@ router.put('/stories/:id', requireAdmin, asyncHandler(async (req, res) => {
   const prev = await getStory(req.params.id);
   if (!prev) return res.status(404).json({ error: 'Story not found' });
   const updated = await updateStory(req.params.id, req.body || {});
-  if (updated.active && !prev.active) broadcastStory(updated);
+  if (updated.active && !prev.active) notifyStoryToAll(updated);
   res.json(updated);
 }));
 

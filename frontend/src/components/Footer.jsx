@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Send } from 'lucide-react';
+import { Send, Bot } from 'lucide-react';
 import { useApp } from '../store/AppContext';
 import { t } from '../lib/i18n';
+import { telegramBotUrl } from '../lib/telegram';
 
 const PAYMENTS = [
   { name: 'CRYPTO', labelKey: 'pay_footer_crypto' },
@@ -25,6 +26,9 @@ export default function Footer() {
           </p>
           <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 border border-canvas/25 text-xs font-semibold uppercase tracking-[0.12em] px-4 py-2 rounded-full hover:bg-canvas hover:text-pine transition-colors">
             <Send size={13} /> {t('join_telegram')}
+          </a>
+          <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-xs text-canvas/60 hover:text-canvas transition-colors">
+            <Bot size={13} /> {t('telegram_bot_chat')}
           </a>
           <p className="mt-6 text-xs text-canvas/50">{t('rights_reserved').replace('{year}', '2026').replace('{store}', settings?.store_name || 'NARCOS BAY')}</p>
         </div>

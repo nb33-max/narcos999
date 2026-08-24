@@ -594,36 +594,6 @@ async function handleCallback(bot, query) {
   }
 }
 
-// ---------- story broadcast ----------
-async function broadcastStory(story) {
-  const users = await listTelegramUsers();
-  if (!users.length || !story?.media_url) return { sent: 0, failed: 0 };
-  const b = getBot();
-  let sent = 0;
-  let failed = 0;
-  const caption = `${story.title || ''}${story.caption ? `\n\n${story.caption}` : ''}`.trim();
-  const isVideo = story.media_type === 'video' || /\.(mp4|webm|mov)(\?|#|$)/i.test(story.media_url || '');
-  const kb = story.link_url ? { inline_keyboard: [[{ text: '🔗 ' + tLang('EN', 'stories_view_now'), url: story.link_url }]] } : undefined;
-  for (const u of users) {
-    try {
-      if (isVideo) {
-        await b.sendVideo(u.telegram_id, story.media_url, { caption, reply_markup: kb, supports_streaming: true });
-      } else {
-        await b.sendPhoto(u.telegram_id, story.media_url, { caption, reply_markup: kb });
-      }
-      sent++;
-    } catch {
-      try {
-        await b.sendDocument(u.telegram_id, story.media_url, { caption, reply_markup: kb });
-        sent++;
-      } catch {
-        failed++;
-      }
-    }
-  }
-  return { sent, failed };
-}
-
 // ---------- broadcast ----------
 async function broadcastMessage(text, fromChatId) {
   const users = await listTelegramUsers();
@@ -789,5 +759,3 @@ export function notifyOrderStatus(chatId, order) {
   lines.push('', '🔔 Check your orders on the site for full details.');
   return sendToChat(chatId, lines.join('\n'));
 }
-
-export { broadcastStory };

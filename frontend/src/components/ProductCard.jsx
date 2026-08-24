@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Play, Star } from 'lucide-react';
+import { Heart, Play, Star, Plus } from 'lucide-react';
 import { useWishlist } from '../store/WishlistContext';
+import { useCart } from '../store/CartContext';
 import { useApp } from '../store/AppContext';
 import { useToast } from '../store/ToastContext';
 import { formatCurrency } from '../lib/format';
-import { t } from '../lib/i18n';
+import { t, interpolate } from '../lib/i18n';
 import VideoStoryViewer from './VideoStoryViewer';
 
 function Badge({ children, color = 'bg-crimson text-canvas' }) {
@@ -13,8 +14,9 @@ function Badge({ children, color = 'bg-crimson text-canvas' }) {
 }
 
 export default function ProductCard({ product }) {
-  const { settings } = useApp();
+  const { settings, trackEvent } = useApp();
   const { toggle, isSaved } = useWishlist();
+  const { addItem } = useCart();
   const { toast } = useToast();
   const [imgIdx, setImgIdx] = useState(0);
   const [story, setStory] = useState(null);
@@ -23,12 +25,30 @@ export default function ProductCard({ product }) {
   const saved = isSaved(product.id);
   const outOfStock = product.inventory <= 0;
   const price = product.price_on_request ? null : (product.price ?? 0);
+  const defaultTier = product.pricing_tiers?.[0] || null;
+  const quickPrice = defaultTier ? defaultTier.price : (product.price_on_request ? null : (product.price ?? null));
+  const canQuickAdd = !outOfStock && quickPrice !== null && quickPrice !== undefined;
 
   const handleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
     const added = toggle(product);
     toast(added ? t('saved_to_wishlist') : t('removed_from_wishlist'), added ? 'success' : 'info');
+  };
+
+  const handleQuickAdd = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!canQuickAdd) return;
+    const cartImage = media.find((m) => m.media_type === 'image')?.secure_url || media.find((m) => m.is_primary)?.secure_url || media[0]?.secure_url;
+    addItem({
+      product_id: product.id, name: product.name, image: cartImage,
+      tier: defaultTier ? `${defaultTier.quantity}${defaultTier.unit}`.toUpperCase() : null,
+      variant: product.strain_type || null,
+      unit_price: quickPrice, quantity: 1, max_qty: product.inventory,
+    });
+    trackEvent('cart_add', { entity_id: product.id, entity_name: product.name, metadata: { tier: defaultTier?.quantity, qty: 1 } });
+    toast(`${interpolate(t('added_to_cart'), { name: product.name })} — ${formatCurrency(quickPrice, settings)}`, 'success');
   };
 
   const currentMedia = media[imgIdx % media.length];
@@ -79,6 +99,12 @@ export default function ProductCard({ product }) {
         <button onClick={handleWishlist} className={`absolute bottom-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-soft ${saved ? 'bg-crimson text-canvas' : 'bg-white/90 text-pine hover:text-crimson'}`} aria-label={t('aria_wishlist')}>
           <Heart size={16} fill={saved ? 'currentColor' : 'none'} />
         </button>
+
+        {canQuickAdd && (
+          <button onClick={handleQuickAdd} className="absolute bottom-3 left-3 w-9 h-9 rounded-full bg-pine text-canvas flex items-center justify-center shadow-soft hover:bg-crimson active:scale-90 transition-all duration-300" aria-label={t('add_to_cart')}>
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
       {story && <VideoStoryViewer video={story} title={product.name} onClose={() => setStory(null)} />}
