@@ -1,8 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Send, MessageSquare, ShieldAlert, Search, Heart, ShoppingBag, User, Globe, Menu, X, Bell } from 'lucide-react';
+import { Send, MessageSquare, ShieldAlert, Search, ShoppingBag, User, Globe, Menu, X, Bell } from 'lucide-react';
 import { useApp, LANGUAGE_OPTIONS } from '../store/AppContext';
 import { useCart } from '../store/CartContext';
-import { useWishlist } from '../store/WishlistContext';
 import { t, getLang } from '../lib/i18n';
 import { useState } from 'react';
 
@@ -16,7 +15,6 @@ const NAV = [
 export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
   const { settings, cms, user, lang, changeLanguage, notifications, unreadCount, markNotificationsRead } = useApp();
   const { count } = useCart();
-  const { count: savedCount } = useWishlist();
   const navigate = useNavigate();
   const [langOpen, setLangOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -75,13 +73,6 @@ export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
             <button onClick={onOpenSearch} className="p-2 text-pine hover:text-crimson transition-colors" aria-label={t('aria_search')}>
               <Search size={18} />
             </button>
-
-            <Link to="/saved" className="relative p-2 text-pine hover:text-crimson transition-colors" aria-label={t('aria_wishlist')}>
-              <Heart size={18} />
-              {savedCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-crimson text-canvas text-[9px] font-bold rounded-full flex items-center justify-center">{savedCount}</span>
-              )}
-            </Link>
 
             <button onClick={onOpenCart} className="relative p-2 text-pine hover:text-crimson transition-colors" aria-label={t('aria_cart')}>
               <ShoppingBag size={18} />

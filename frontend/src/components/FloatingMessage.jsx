@@ -19,7 +19,7 @@ export default function FloatingMessage({ onOpenAuth }) {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+    <div className="fixed bottom-20 right-5 z-40 lg:bottom-5 flex flex-col items-end gap-3">
       {open && (
         <div className="relative bg-white border border-stone rounded-2xl shadow-lift p-4 max-w-xs anim-fade">
           <button onClick={() => setOpen(false)} className="absolute top-2 right-2 p-1 text-moss/60 hover:text-crimson">

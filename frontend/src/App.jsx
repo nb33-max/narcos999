@@ -14,6 +14,7 @@ import BotPanel from './pages/BotPanel.jsx';
 import LoadingScreen from './components/LoadingScreen.jsx';
 import AgeVerificationModal, { isAgeVerified } from './components/AgeVerificationModal.jsx';
 import FloatingMessage from './components/FloatingMessage.jsx';
+import MobileNav from './components/MobileNav.jsx';
 
 const HomePage = lazy(() => import('./pages/HomePage.jsx'));
 const ShopPage = lazy(() => import('./pages/ShopPage.jsx'));
@@ -46,7 +47,7 @@ function Shell() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col pb-16 lg:pb-0">
       <Header onOpenCart={() => setCartOpen(true)} onOpenSearch={() => setSearchOpen(true)} onOpenAuth={() => setAuthOpen(true)} />
       <main className="flex-1">
         <Suspense fallback={<LoadingScreen />}>
@@ -67,6 +68,7 @@ function Shell() {
         </Suspense>
       </main>
       <Footer />
+      <MobileNav onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} />
       <FloatingMessage onOpenAuth={() => setAuthOpen(true)} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
