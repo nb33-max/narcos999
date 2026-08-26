@@ -20,9 +20,11 @@ const PAYMENTS = [
 export default function HomePage() {
   const { cms, settings, categories, stories } = useApp();
   const [featured, setFeatured] = useState([]);
+  const [newArrivals, setNewArrivals] = useState([]);
 
   useEffect(() => {
     apiGet('/products', { featured: 'true', limit: 8 }).then(setFeatured).catch(() => {});
+    apiGet('/products', { new_arrival: 'true', limit: 8 }).then(setNewArrivals).catch(() => {});
   }, []);
 
   const hero = cms || {};
@@ -33,15 +35,22 @@ export default function HomePage() {
       <StoriesRail stories={stories} />
 
       {/* HERO — compact, action-first */}
-      <section className="relative min-h-[42vh] flex items-center overflow-hidden bg-gradient-to-b from-subcard to-canvas">
+      <section className="relative min-h-[46vh] flex items-center overflow-hidden bg-gradient-to-b from-subcard to-canvas">
         <div className="absolute inset-0"><SmokeBackground /></div>
         <div className="absolute inset-0 bg-gradient-to-t from-canvas via-transparent to-transparent" />
         <div className="relative max-w-7xl mx-auto px-4 py-14 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson mb-4">{t('hero_kicker')}</p>
+          <h1 className="font-serif text-3xl md:text-5xl font-bold uppercase tracking-[0.08em] text-pine leading-tight">
+            {hero.headline || t('hero_headline')}
+          </h1>
+          <p className="text-moss text-sm md:text-base mt-4 max-w-2xl mx-auto leading-relaxed">
+            {hero.subtitle || t('hero_subtitle')}
+          </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to={hero.primary_cta_url || '/shop'} className="btn-primary !px-10 !py-4 text-sm">
               {hero.primary_cta_label || t('explore_archive')} <ArrowRight size={16} />
             </Link>
-            <a href={settings?.telegram_channel_url || hero.secondary_cta_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="btn-outline !px-10 !py-4 text-sm">
+            <a href={settings?.telegram_channel_url || hero.secondary_cta_url || 'https://t.me/narcosbay'} target="_blank" rel="noreferrer" className="btn-outline !px-10 !py-4 text-sm">
               <Send size={16} /> {hero.secondary_cta_label || t('join_telegram')}
             </a>
           </div>
@@ -65,6 +74,22 @@ export default function HomePage() {
           {featured.slice(0, 8).map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
       </section>
+
+      {/* NEW ARRIVALS */}
+      {newArrivals.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 pb-16">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson mb-2">{t('fresh_stock')}</p>
+              <h2 className="section-title">{t('new_arrivals')}</h2>
+            </div>
+            <Link to="/shop?new_arrival=true" className="btn-ghost">{t('view_all')} <ArrowRight size={14} /></Link>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {newArrivals.slice(0, 8).map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </section>
+      )}
 
       {/* CATEGORY SPACE */}
       <section id="category-space" className="bg-pine py-16 scroll-mt-24">
@@ -123,7 +148,7 @@ export default function HomePage() {
             </div>
             <h2 className="font-serif text-2xl md:text-4xl font-bold uppercase tracking-[0.1em] mt-6">{t('join_telegram_community')}</h2>
             <p className="text-canvas/80 mt-3 max-w-xl mx-auto text-sm md:text-base">{t('telegram_sub')}</p>
-            <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center gap-2 bg-canvas text-pine text-xs font-bold uppercase tracking-[0.14em] px-8 py-4 rounded-full hover:bg-stone transition-colors">
+            <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay'} target="_blank" rel="noreferrer" className="mt-8 inline-flex items-center gap-2 bg-canvas text-pine text-xs font-bold uppercase tracking-[0.14em] px-8 py-4 rounded-full hover:bg-stone transition-colors">
               <Send size={15} /> {settings?.telegram_display_name || 'Narcos Bay'}
             </a>
             <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 text-xs text-canvas/70 hover:text-canvas transition-colors">

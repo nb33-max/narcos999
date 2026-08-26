@@ -95,7 +95,7 @@ export default function ProductPage() {
   };
 
   const telegramInquire = () => {
-    const url = `https://t.me/narcosbay_official?text=${encodeURIComponent(`I'd like to inquire about ${product.name} (${product.sku})`)}`;
+    const url = `https://t.me/narcosbay?text=${encodeURIComponent(`I'd like to inquire about ${product.name} (${product.sku})`)}`;
     window.open(url, '_blank');
   };
 

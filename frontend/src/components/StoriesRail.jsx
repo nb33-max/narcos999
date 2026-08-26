@@ -75,7 +75,7 @@ export default function StoriesRail({ stories = [] }) {
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson">{t('stories_kicker')}</p>
           <span className="h-px flex-1 bg-stone/60" />
         </div>
-        <div className="flex gap-5 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex gap-5 overflow-x-auto py-2 scrollbar-none">
           {active.map((s, i) => {
             const isSeen = seen.includes(s.id);
             return (

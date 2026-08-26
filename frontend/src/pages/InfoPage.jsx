@@ -80,7 +80,7 @@ export default function InfoPage({ type }) {
             <p className="text-sm text-moss font-semibold">{t('still_need_help')}</p>
             <div className="flex gap-3">
               <a href="mailto:admin@narcosbay.com" className="btn-outline !py-2"><Mail size={13} /> {t('btn_email')}</a>
-              <a href="https://t.me/narcosbay_official" target="_blank" rel="noreferrer" className="btn-outline !py-2"><MessageCircle size={13} /> {t('btn_telegram')}</a>
+              <a href="https://t.me/narcosbay" target="_blank" rel="noreferrer" className="btn-outline !py-2"><MessageCircle size={13} /> {t('btn_telegram')}</a>
             </div>
           </div>
         </div>

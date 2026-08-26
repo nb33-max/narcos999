@@ -41,7 +41,7 @@ export default function RestrictedPage() {
             </a>
           )}
           {telegramEnabled && (
-            <a href={rules?.telegram_button_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="btn-outline">
+            <a href={rules?.telegram_button_url || 'https://t.me/narcosbay'} target="_blank" rel="noreferrer" className="btn-outline">
               <MessageCircle size={15} /> {t('join_telegram')}
             </a>
           )}

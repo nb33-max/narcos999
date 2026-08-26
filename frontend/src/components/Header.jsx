@@ -26,7 +26,7 @@ export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
     <>
       <div className="bg-pine text-canvas text-[11px] text-center py-2 px-4">
         <a
-          href={settings?.telegram_channel_url || 'https://t.me/narcosbay_official'}
+          href={settings?.telegram_channel_url || 'https://t.me/narcosbay'}
           target="_blank"
           rel="noreferrer"
           className="inline-flex items-center gap-2 uppercase tracking-[0.14em] hover:text-stone transition-colors"
@@ -57,7 +57,7 @@ export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
           </nav>
 
           <div className="flex items-center gap-1">
-            <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="hidden 2xl:inline-flex items-center gap-1.5 bg-pine text-canvas text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-full hover:bg-crimson transition-colors whitespace-nowrap">
+            <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay'} target="_blank" rel="noreferrer" className="hidden 2xl:inline-flex items-center gap-1.5 bg-pine text-canvas text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-full hover:bg-crimson transition-colors whitespace-nowrap">
               <Send size={11} /> {t('join_telegram')}
             </a>
             <Link to="/contact" className="hidden 2xl:inline-flex items-center gap-1.5 border border-pine/20 text-pine text-[10px] font-semibold uppercase tracking-[0.12em] px-3 py-1.5 rounded-full hover:border-crimson hover:text-crimson transition-colors whitespace-nowrap">

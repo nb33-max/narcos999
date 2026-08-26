@@ -94,16 +94,28 @@ export default function ContactPage() {
         <div className="space-y-4">
           <div className="card p-5">
             <h3 className="font-serif font-semibold uppercase tracking-[0.12em] mb-3">{t('direct_channels')}</h3>
-            <a href="mailto:admin@narcosbay.com" className="flex items-center gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
-              <Mail size={16} className="text-crimson" /> admin@narcosbay.com
+            <a href="mailto:narcosbay@gmail.com" className="flex items-start gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
+              <Mail size={16} className="text-crimson mt-0.5" />
+              <span>
+                narcosbay@gmail.com
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-moss mt-0.5">{t('ch_email')}</span>
+              </span>
             </a>
-            <a href="https://t.me/narcosbay_official" target="_blank" rel="noreferrer" className="flex items-center gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
-              <MessageCircle size={16} className="text-crimson" /> @narcosbay_official
+            <a href="https://t.me/narcosbay" target="_blank" rel="noreferrer" className="flex items-start gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
+              <MessageCircle size={16} className="text-crimson mt-0.5" />
+              <span>
+                @narcosbay
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-moss mt-0.5">{t('ch_telegram')}</span>
+              </span>
             </a>
-            <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="flex items-center gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
-              <Bot size={16} className="text-crimson" /> @{TELEGRAM_BOT_HANDLE}
+            <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="flex items-start gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
+              <Bot size={16} className="text-crimson mt-0.5" />
+              <span>
+                @{TELEGRAM_BOT_HANDLE}
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-moss mt-0.5">{t('ch_bot')}</span>
+              </span>
             </a>
-            <p className="flex items-center gap-3 py-2.5 text-sm font-semibold text-pine"><Clock size={16} className="text-crimson" /> {t('replies_within')}</p>
+            <p className="flex items-center gap-3 py-2.5 text-sm font-semibold text-pine"><Clock size={16} className="text-crimson mt-0.5" /> {t('replies_within')}</p>
           </div>
 
           <div className="card p-5">

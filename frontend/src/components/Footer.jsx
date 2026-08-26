@@ -24,7 +24,7 @@ export default function Footer() {
           <p className="mt-4 text-sm text-canvas/70 leading-relaxed">
             {settings?.tagline || t('hero_subtitle')}
           </p>
-          <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay_official'} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 border border-canvas/25 text-xs font-semibold uppercase tracking-[0.12em] px-4 py-2 rounded-full hover:bg-canvas hover:text-pine transition-colors">
+          <a href={settings?.telegram_channel_url || 'https://t.me/narcosbay'} target="_blank" rel="noreferrer" className="mt-5 inline-flex items-center gap-2 border border-canvas/25 text-xs font-semibold uppercase tracking-[0.12em] px-4 py-2 rounded-full hover:bg-canvas hover:text-pine transition-colors">
             <Send size={13} /> {t('join_telegram')}
           </a>
           <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-xs text-canvas/60 hover:text-canvas transition-colors">
