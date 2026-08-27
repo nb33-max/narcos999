@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Send, Bot, ChevronDown } from 'lucide-react';
-import SmokeBackground from '../components/SmokeBackground.jsx';
+import { ArrowRight, Send, Bot } from 'lucide-react';
 import ProductCard from '../components/ProductCard.jsx';
 import StoriesRail from '../components/StoriesRail.jsx';
 import { useApp } from '../store/AppContext.jsx';
@@ -18,48 +17,21 @@ const PAYMENTS = [
 ];
 
 export default function HomePage() {
-  const { cms, settings, categories, stories } = useApp();
+  const { settings, categories, stories } = useApp();
   const [featured, setFeatured] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
+  const [bestSellers, setBestSellers] = useState([]);
 
   useEffect(() => {
     apiGet('/products', { featured: 'true', limit: 8 }).then(setFeatured).catch(() => {});
     apiGet('/products', { new_arrival: 'true', limit: 8 }).then(setNewArrivals).catch(() => {});
+    apiGet('/products', { best_seller: 'true', limit: 8 }).then(setBestSellers).catch(() => {});
   }, []);
-
-  const hero = cms || {};
 
   return (
     <div>
       {/* STORIES RAIL */}
       <StoriesRail stories={stories} />
-
-      {/* HERO — compact, action-first */}
-      <section className="relative min-h-[46vh] flex items-center overflow-hidden bg-gradient-to-b from-subcard to-canvas">
-        <div className="absolute inset-0"><SmokeBackground /></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-canvas via-transparent to-transparent" />
-        <div className="relative max-w-7xl mx-auto px-4 py-14 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson mb-4">{t('hero_kicker')}</p>
-          <h1 className="font-serif text-3xl md:text-5xl font-bold uppercase tracking-[0.08em] text-pine leading-tight">
-            {hero.headline || t('hero_headline')}
-          </h1>
-          <p className="text-moss text-sm md:text-base mt-4 max-w-2xl mx-auto leading-relaxed">
-            {hero.subtitle || t('hero_subtitle')}
-          </p>
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to={hero.primary_cta_url || '/shop'} className="btn-primary !px-10 !py-4 text-sm">
-              {hero.primary_cta_label || t('explore_archive')} <ArrowRight size={16} />
-            </Link>
-            <a href={settings?.telegram_channel_url || hero.secondary_cta_url || 'https://t.me/narcosbay'} target="_blank" rel="noreferrer" className="btn-outline !px-10 !py-4 text-sm">
-              <Send size={16} /> {hero.secondary_cta_label || t('join_telegram')}
-            </a>
-          </div>
-          <a href="#category-space" className="mt-10 inline-flex flex-col items-center gap-1 text-moss hover:text-crimson transition-colors">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{t('explore')}</span>
-            <ChevronDown size={18} className="animate-bounce" />
-          </a>
-        </div>
-      </section>
 
       {/* FEATURED DROPS */}
       <section className="max-w-7xl mx-auto px-4 py-16">
@@ -87,6 +59,22 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {newArrivals.slice(0, 8).map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </section>
+      )}
+
+      {/* BEST SELLERS */}
+      {bestSellers.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 pb-16">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson mb-2">{t('customer_favorites')}</p>
+              <h2 className="section-title">{t('best_sellers')}</h2>
+            </div>
+            <Link to="/shop" className="btn-ghost">{t('view_all')} <ArrowRight size={14} /></Link>
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            {bestSellers.slice(0, 8).map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
       )}

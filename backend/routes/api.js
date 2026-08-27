@@ -126,7 +126,7 @@ router.get('/health', (req, res) => {
 
 // ---------- Products ----------
 router.get('/products', asyncHandler(async (req, res) => {
-  const { category, featured, search, new_arrival, sort, min_price, max_price, strain, in_stock, category_id, limit } = req.query;
+  const { category, featured, search, new_arrival, best_seller, sort, min_price, max_price, strain, in_stock, category_id, limit } = req.query;
   let query = supabase.from('products').select(PRODUCT_SELECT);
   query = query.eq('status', 'PUBLISHED').eq('is_hidden', 0);
   if (category) {
@@ -137,6 +137,7 @@ router.get('/products', asyncHandler(async (req, res) => {
   if (category_id) query = query.eq('category_id', category_id);
   if (featured === 'true') query = query.eq('featured', 1);
   if (new_arrival === 'true') query = query.eq('new_arrival', 1);
+  if (best_seller === 'true') query = query.eq('best_seller', 1);
   if (strain) query = query.eq('strain_type', strain);
   if (in_stock === 'true') query = query.gt('inventory', 0);
   if (min_price) query = query.gte('price', Number(min_price));
@@ -631,7 +632,7 @@ router.get('/settings', asyncHandler(async (req, res) => {
   res.json(row.data);
 }));
 
-router.put('/settings', asyncHandler(async (req, res) => {
+router.put('/settings', requireAdmin, asyncHandler(async (req, res) => {
   const { error } = await supabase.from('site_settings').update({ data: JSON.stringify(req.body || {}), updated_at: now() }).eq('id', 'global_settings');
   if (error) throw error;
   res.json(req.body);
@@ -643,7 +644,7 @@ router.get('/cms', asyncHandler(async (req, res) => {
   res.json(row.data);
 }));
 
-router.put('/cms', asyncHandler(async (req, res) => {
+router.put('/cms', requireAdmin, asyncHandler(async (req, res) => {
   const { error } = await supabase.from('homepage_cms').update({ data: JSON.stringify(req.body || {}), updated_at: now() }).eq('id', 'global_cms');
   if (error) throw error;
   res.json(req.body);

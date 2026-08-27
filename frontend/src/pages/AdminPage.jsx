@@ -1556,6 +1556,7 @@ function SettingsTab({ settings }) {
       <div className="card p-5">
         <h3 className="field-heading">Homepage CMS Editor</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div><label className="label">Hero Kicker</label><input className="input" value={c.hero_kicker} onChange={setCms('hero_kicker')} /></div>
           <div><label className="label">Hero Headline</label><input className="input" value={c.hero_headline} onChange={setCms('hero_headline')} /></div>
           <div><label className="label">Hero Subtitle</label><input className="input" value={c.hero_subtitle} onChange={setCms('hero_subtitle')} /></div>
           <div><label className="label">Primary CTA Label</label><input className="input" value={c.primary_cta_label} onChange={setCms('primary_cta_label')} /></div>
