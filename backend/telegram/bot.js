@@ -189,6 +189,11 @@ async function sendProduct(bot, chatId, p, lang, opts = {}) {
   const mediaItems = (p.media || []).filter((m) => m.secure_url);
   const kb = { ...navKeyboard(lang), inline_keyboard: [...navKeyboard(lang).inline_keyboard] };
   if (opts.list && opts.list.url) kb.inline_keyboard.unshift([{ text: tLang(lang, 'btn_all_products'), callback_data: opts.list.url }]);
+  const s = settingsCache;
+  if (p.slug) {
+    const site = s.site_url || 'https://narcos999.vercel.app';
+    kb.inline_keyboard.push([{ text: tLang(lang, 'btn_open_website'), url: `${site}/product/${p.slug}` }]);
+  }
   const caption = productCaption(p, lang);
   const st = getState(chatId);
   st.msgId = null;
@@ -227,11 +232,7 @@ async function renderProductList(bot, chatId, lang, items, page, pageCount, base
     return;
   }
   const s = settingsCache;
-  const site = s.site_url || 'https://narcos999.vercel.app';
-  const rows = items.map((p) => [
-    { text: `${p.name} — ${p.price_on_request ? tLang(lang, 'price_on_request') : fmt(p.price, s)}`, callback_data: `prod:${p.id}` },
-    { text: tLang(lang, 'btn_open_website'), url: p.slug ? `${site}/product/${p.slug}` : `${site}/shop` },
-  ]);
+  const rows = items.map((p) => [{ text: `${p.name} — ${p.price_on_request ? tLang(lang, 'price_on_request') : fmt(p.price, s)}`, callback_data: `prod:${p.id}` }]);
   const nav = [];
   if (page > 0) nav.push({ text: '⬅️', callback_data: `${baseCb}:${page - 1}` });
   nav.push({ text: `${page + 1}/${pageCount}`, callback_data: 'nav:none' });
