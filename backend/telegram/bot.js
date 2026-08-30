@@ -287,10 +287,7 @@ async function showHome(bot, chatId, lang, fresh = false) {
 }
 
 async function showLanguagePicker(bot, chatId, lang, ask = true) {
-  const rows = [];
-  for (let i = 0; i < LANGS.length; i += 2) {
-    rows.push(LANGS.slice(i, i + 2).map((l) => ({ text: `${l.native} (${l.code})`, callback_data: `lang:${l.code}` })));
-  }
+  const rows = LANGS.map((l) => [{ text: `${l.flag} ${l.native} (${l.code})`, callback_data: `lang:${l.code}` }]);
   const kb = { inline_keyboard: rows };
   await sendText(bot, chatId, tLang(lang, 'bot_choose_lang'), { reply_markup: kb });
 }

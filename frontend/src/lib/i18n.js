@@ -1,11 +1,11 @@
 export const LANGS = [
-  { code: 'EN', name: 'English', native: 'English', dir: 'ltr' },
-  { code: 'FR', name: 'French', native: 'Français', dir: 'ltr' },
-  { code: 'ES', name: 'Spanish', native: 'Español', dir: 'ltr' },
-  { code: 'DE', name: 'German', native: 'Deutsch', dir: 'ltr' },
-  { code: 'IT', name: 'Italian', native: 'Italiano', dir: 'ltr' },
-  { code: 'PT', name: 'Portuguese', native: 'Português', dir: 'ltr' },
-  { code: 'AR', name: 'Arabic', native: 'العربية', dir: 'rtl' },
+  { code: 'EN', name: 'English', native: 'English', flag: '🇬🇧', dir: 'ltr' },
+  { code: 'FR', name: 'French', native: 'Français', flag: '🇫🇷', dir: 'ltr' },
+  { code: 'ES', name: 'Spanish', native: 'Español', flag: '🇪🇸', dir: 'ltr' },
+  { code: 'DE', name: 'German', native: 'Deutsch', flag: '🇩🇪', dir: 'ltr' },
+  { code: 'IT', name: 'Italian', native: 'Italiano', flag: '🇮🇹', dir: 'ltr' },
+  { code: 'PT', name: 'Portuguese', native: 'Português', flag: '🇵🇹', dir: 'ltr' },
+  { code: 'AR', name: 'Arabic', native: 'العربية', flag: '🇸🇦', dir: 'rtl' },
 ];
 
 const en = {
