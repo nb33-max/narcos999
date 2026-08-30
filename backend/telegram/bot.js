@@ -69,6 +69,7 @@ async function getSettings() {
     telegram_channel_url: d.telegram_channel_url || '',
     telegram_display_name: d.telegram_display_name || 'Narcos Bay',
     telegram_admin_handle: d.telegram_admin_handle || 'narcosbay',
+    site_url: (d.site_url || 'https://narcos999.vercel.app').replace(/\/+$/, ''),
     currency_code: d.currency_code || 'EUR',
     currency_symbol: d.currency_symbol || '€',
     symbol_position: d.symbol_position || 'before',
@@ -123,17 +124,6 @@ function navKeyboard(lang, showHome = true) {
   if (showHome) row.push({ text: '🏠 ' + tLang(lang, 'btn_home'), callback_data: 'nav:home' });
   row.push({ text: '🌐 ' + tLang(lang, 'btn_language'), callback_data: 'nav:lang' });
   return { inline_keyboard: [row] };
-}
-
-function mainReplyKeyboard(lang) {
-  return {
-    keyboard: [
-      [{ text: '📂 ' + tLang(lang, 'btn_categories') }, { text: '⭐ ' + tLang(lang, 'btn_featured') }],
-      [{ text: '📜 ' + tLang(lang, 'btn_policies') }, { text: '🛒 ' + tLang(lang, 'btn_new_arrivals') }],
-      [{ text: '🌐 ' + tLang(lang, 'btn_language') }, { text: '📞 ' + tLang(lang, 'btn_contact') }],
-    ],
-    resize_keyboard: true,
-  };
 }
 
 // ---------- product queries ----------
@@ -231,12 +221,17 @@ async function sendMediaIndividually(bot, chatId, mediaItems) {
   }
 }
 
-async function renderProductList(bot, chatId, lang, items, page, pageCount, baseCb) {
+async function renderProductList(bot, chatId, lang, items, page, pageCount, baseCb, title) {
   if (!items.length) {
     await sendText(bot, chatId, tLang(lang, 'bot_no_products'), { reply_markup: navKeyboard(lang) });
     return;
   }
-  const rows = items.map((p) => [{ text: `${p.name} — ${p.price_on_request ? tLang(lang, 'price_on_request') : fmt(p.price, settingsCache)}`, callback_data: `prod:${p.id}` }]);
+  const s = settingsCache;
+  const site = s.site_url || 'https://narcos999.vercel.app';
+  const rows = items.map((p) => [
+    { text: `${p.name} — ${p.price_on_request ? tLang(lang, 'price_on_request') : fmt(p.price, s)}`, callback_data: `prod:${p.id}` },
+    { text: tLang(lang, 'btn_open_website'), url: p.slug ? `${site}/product/${p.slug}` : `${site}/shop` },
+  ]);
   const nav = [];
   if (page > 0) nav.push({ text: '⬅️', callback_data: `${baseCb}:${page - 1}` });
   nav.push({ text: `${page + 1}/${pageCount}`, callback_data: 'nav:none' });
@@ -244,7 +239,17 @@ async function renderProductList(bot, chatId, lang, items, page, pageCount, base
   const kb = {
     inline_keyboard: [...rows, nav, [...navKeyboard(lang).inline_keyboard[0]]],
   };
-  await sendText(bot, chatId, `${tLang(lang, 'bot_products_found')} (${items.length})`, { reply_markup: kb });
+  const handle = s.telegram_admin_handle || 'narcosbay';
+  const text = [
+    title || tLang(lang, 'btn_categories'),
+    '',
+    tLang(lang, 'bot_choose_product'),
+    '',
+    interpolateLang(lang, 'bot_page_of', { cur: page + 1, total: pageCount }),
+    '',
+    interpolateLang(lang, 'bot_order_footer', { handle }),
+  ].join('\n');
+  await sendText(bot, chatId, text, { reply_markup: kb });
 }
 
 // ---------- screens ----------
@@ -258,7 +263,26 @@ async function showHome(bot, chatId, lang, fresh = false) {
     '',
     tLang(lang, 'bot_home_hint'),
   ].filter(Boolean).join('\n');
-  await sendText(bot, chatId, text, { reply_markup: mainReplyKeyboard(lang) }, fresh);
+  const cats = await queryCategories();
+  const catRows = [];
+  for (let i = 0; i < cats.length; i += 2) {
+    catRows.push(cats.slice(i, i + 2).map((c) => ({ text: c.name, callback_data: `cat:${c.id}:0` })));
+  }
+  const kb = {
+    inline_keyboard: [
+      ...catRows,
+      [
+        { text: '⭐ ' + tLang(lang, 'btn_featured'), callback_data: 'feat:0' },
+        { text: '🛒 ' + tLang(lang, 'btn_new_arrivals'), callback_data: 'new:0' },
+      ],
+      [
+        { text: '📜 ' + tLang(lang, 'btn_policies'), callback_data: 'pol:list' },
+        { text: '📞 ' + tLang(lang, 'btn_contact'), callback_data: 'nav:contact' },
+      ],
+      [{ text: '🌐 ' + tLang(lang, 'btn_language'), callback_data: 'nav:lang' }],
+    ],
+  };
+  await sendText(bot, chatId, text, { reply_markup: kb }, fresh);
 }
 
 async function showLanguagePicker(bot, chatId, lang, ask = true) {
@@ -468,7 +492,7 @@ async function handleText(bot, msg) {
   if (isLabel(lang, text, MENU_KEYS.featured)) {
     st.stack.push('home');
     const r = await queryProducts(null, 0, true, false);
-    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, 'feat');
+    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, 'feat', `⭐ ${tLang(lang, 'btn_featured')}`);
   }
   if (isLabel(lang, text, MENU_KEYS.policies)) {
     st.stack.push('home');
@@ -485,7 +509,7 @@ async function handleText(bot, msg) {
   if (isLabel(lang, text, 'btn_new_arrivals')) {
     st.stack.push('home');
     const r = await queryProducts(null, 0, false, true);
-    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, 'new');
+    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, 'new', `🛒 ${tLang(lang, 'btn_new_arrivals')}`);
   }
 
   // Fallback: treat text as a search query
@@ -499,7 +523,7 @@ async function handleText(bot, msg) {
     if (!error && data?.length) {
       const items = data.slice(0, PAGE_SIZE).map(shapeProduct);
       await bot.sendMessage(chatId, `🔍 ${tLang(lang, 'search')}: ${text}`);
-      return renderProductList(bot, chatId, lang, items, 0, 1, 'srch');
+      return renderProductList(bot, chatId, lang, items, 0, 1, 'srch', `🔍 ${tLang(lang, 'search')}: ${text}`);
     }
   }
   await sendErr(chatId, lang, tLang(lang, 'bot_unknown'));
@@ -540,21 +564,28 @@ async function handleCallback(bot, query) {
     st.stack.push('home');
     return showLanguagePicker(bot, chatId, lang);
   }
+  if (data === 'nav:contact') {
+    st.stack.push('home');
+    return showContact(bot, chatId, lang);
+  }
   if (data === 'nav:none') return;
 
   if (data.startsWith('cat:')) {
     const [, catId, pageStr] = data.split(':');
     const page = Number(pageStr || 0);
     const r = await queryProducts(catId, page, false, false);
+    const { data: cat } = await supabase.from('categories').select('name').eq('id', catId).maybeSingle();
+    const title = cat?.name || tLang(lang, 'btn_categories');
     st.stack = st.stack.length ? st.stack : ['home'];
-    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, `cat:${catId}`);
+    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, `cat:${catId}`, title);
   }
 
   if (data.startsWith('feat:') || data.startsWith('new:') || data.startsWith('srch:')) {
     const [kind, pageStr] = data.split(':');
     const page = Number(pageStr || 0);
     const r = await queryProducts(null, page, kind === 'feat', kind === 'new');
-    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, kind);
+    const title = kind === 'feat' ? `⭐ ${tLang(lang, 'btn_featured')}` : kind === 'new' ? `🛒 ${tLang(lang, 'btn_new_arrivals')}` : `🔍 ${tLang(lang, 'search')}`;
+    return renderProductList(bot, chatId, lang, r.items, r.page, r.pageCount, kind, title);
   }
 
   if (data.startsWith('prod:')) {
