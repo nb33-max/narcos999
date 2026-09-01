@@ -190,10 +190,13 @@ async function sendProduct(bot, chatId, p, lang, opts = {}) {
   const kb = { ...navKeyboard(lang), inline_keyboard: [...navKeyboard(lang).inline_keyboard] };
   if (opts.list && opts.list.url) kb.inline_keyboard.unshift([{ text: tLang(lang, 'btn_all_products'), callback_data: opts.list.url }]);
   const s = settingsCache;
+  const adminUrl = `https://t.me/${s.telegram_admin_handle || 'narcosbay'}`;
+  const actionRow = [{ text: tLang(lang, 'btn_message_to_order'), url: adminUrl }];
   if (p.slug) {
     const site = s.site_url || 'https://narcos999.vercel.app';
-    kb.inline_keyboard.push([{ text: tLang(lang, 'btn_open_website'), url: `${site}/product/${p.slug}` }]);
+    actionRow.unshift({ text: tLang(lang, 'btn_open_website'), url: `${site}/product/${p.slug}` });
   }
+  kb.inline_keyboard.push(actionRow);
   const caption = productCaption(p, lang);
   const st = getState(chatId);
   st.msgId = null;
