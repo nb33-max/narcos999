@@ -4,13 +4,6 @@ import { useApp } from '../store/AppContext';
 import { t } from '../lib/i18n';
 import { telegramBotUrl } from '../lib/telegram';
 
-const PAYMENTS = [
-  { name: 'CRYPTO', labelKey: 'pay_footer_crypto' },
-  { name: 'PAYPAL', labelKey: 'pay_footer_paypal' },
-  { name: 'WIRE', labelKey: 'pay_footer_wire' },
-  { name: 'GIFT', labelKey: 'pay_footer_gift' },
-];
-
 export default function Footer() {
   const { settings } = useApp();
   return (
@@ -56,18 +49,8 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-canvas/15">
-        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col items-center text-center gap-5">
+        <div className="max-w-7xl mx-auto px-4 py-6 text-center">
           <p className="text-xs text-canvas/50">{t('rights_reserved').replace('{year}', '2026').replace('{store}', settings?.store_name || 'NARCOS BAY')}</p>
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.18em] text-canvas/70 mb-3">{t('footer_payments')}</h4>
-            <div className="flex flex-wrap justify-center gap-2">
-              {PAYMENTS.map((p) => (
-                <span key={p.name} title={t(p.labelKey)} className="border border-canvas/20 rounded-lg px-3 py-2 text-[11px] font-bold tracking-wider text-canvas/80 text-center">
-                  {p.name}
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </footer>
