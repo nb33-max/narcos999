@@ -7,7 +7,6 @@ import { useToast } from '../store/ToastContext.jsx';
 import { apiPost } from '../lib/api';
 import { formatCurrency } from '../lib/format';
 import { t } from '../lib/i18n';
-import AuthModal from '../components/AuthModal.jsx';
 import { BitcoinIcon, PayPalIcon, BankIcon, GiftCardIcon } from '../components/PaymentIcons.jsx';
 
 const PAYMENT_METHODS = [
@@ -21,7 +20,6 @@ export default function CheckoutPage() {
   const { items, totals, promo, promoDiscount, removePromo, clearCart, applyPromo } = useCart();
   const { settings, user, paymentMethods } = useApp();
   const { toast } = useToast();
-  const [authOpen, setAuthOpen] = useState(false);
   const [form, setForm] = useState({
     email: user?.email || '', full_name: user?.full_name || '', phone: '',
     address: '', city: '', postal_code: '', country: 'Germany',
@@ -62,10 +60,9 @@ export default function CheckoutPage() {
         <h1 className="font-serif text-2xl font-bold text-pine mt-4">{t('checkout_gate_title')}</h1>
         <p className="text-moss text-sm mt-3">{t('checkout_gate_body')}</p>
         <div className="flex flex-col gap-3 mt-6">
-          <button onClick={() => setAuthOpen(true)} className="btn-primary">{t('sign_in')}</button>
-          <button onClick={() => setAuthOpen(true)} className="btn-outline">{t('create_account')}</button>
+          <Link to="/auth?mode=signin&redirect=/checkout" className="btn-primary text-center">{t('sign_in')}</Link>
+          <Link to="/auth?mode=register&redirect=/checkout" className="btn-outline text-center">{t('create_account')}</Link>
         </div>
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       </div>
     );
   }

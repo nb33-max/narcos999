@@ -25,7 +25,7 @@ function NavTab({ active, badge, onClick, to, label, children }) {
   );
 }
 
-export default function MobileNav({ onOpenCart, onOpenAuth }) {
+export default function MobileNav() {
   const { user } = useApp();
   const { count: cartCount } = useCart();
   const { count: savedCount } = useWishlist();
@@ -34,7 +34,7 @@ export default function MobileNav({ onOpenCart, onOpenAuth }) {
 
   const accountAction = () => {
     if (user) navigate('/account');
-    else onOpenAuth();
+    else navigate('/auth');
   };
 
   const isActive = (to) => (to === '/' ? pathname === '/' : pathname === to || pathname.startsWith(to + '/'));
@@ -51,7 +51,7 @@ export default function MobileNav({ onOpenCart, onOpenAuth }) {
         <NavTab active={isActive('/saved')} to="/saved" label={t('saved')} badge={savedCount}>
           <Heart size={20} />
         </NavTab>
-        <NavTab active={false} onClick={onOpenCart} label={t('cart')} badge={cartCount}>
+        <NavTab active={isActive('/cart')} to="/cart" label={t('cart')} badge={cartCount}>
           <ShoppingBag size={20} />
         </NavTab>
         <NavTab active={isActive('/account')} onClick={accountAction} label={t('account')} badge={0}>

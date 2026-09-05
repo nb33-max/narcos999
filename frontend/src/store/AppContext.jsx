@@ -130,6 +130,14 @@ export function AppProvider({ children }) {
     return res.user;
   }, []);
 
+  const googleLogin = useCallback(async (idToken) => {
+    const res = await apiPost('/auth/google', { id_token: idToken });
+    setToken(res.token);
+    setUser(res.user);
+    loadNotifications();
+    return res.user;
+  }, [loadNotifications]);
+
   const logout = useCallback(async () => {
     try { await apiPost('/auth/logout'); } catch {}
     setToken(null);
@@ -146,10 +154,10 @@ export function AppProvider({ children }) {
     notifications, unreadCount,
     setAvailability, setUser, setCategories, setStories, setPaymentMethods,
     loadStories, loadPaymentMethods, loadNotifications, markNotificationsRead,
-    login, register, logout, trackEvent, changeLanguage, loadSettings,
+    login, register, googleLogin, logout, trackEvent, changeLanguage, loadSettings,
     setSettings, setCms,
   }), [settings, cms, categories, stories, paymentMethods, user, availability, lang, loading,
-      notifications, unreadCount, login, register, logout, trackEvent, changeLanguage, loadSettings,
+      notifications, unreadCount, login, register, googleLogin, logout, trackEvent, changeLanguage, loadSettings,
       loadStories, loadPaymentMethods, loadNotifications, markNotificationsRead]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

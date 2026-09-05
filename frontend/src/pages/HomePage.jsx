@@ -10,10 +10,10 @@ import { telegramBotUrl } from '../lib/telegram';
 import { BitcoinIcon, BankIcon, PayPalIcon, GiftCardIcon } from '../components/PaymentIcons.jsx';
 
 const PAYMENTS = [
-  { id: 'CRYPTO', icon: BitcoinIcon, labelKey: 'pay_crypto', subKey: 'pay_crypto_sub', descKey: 'pay_crypto_desc' },
-  { id: 'PAYPAL', icon: PayPalIcon, labelKey: 'pay_paypal', subKey: 'pay_paypal_sub', descKey: 'pay_paypal_desc' },
-  { id: 'WIRE', icon: BankIcon, labelKey: 'pay_wire', subKey: 'pay_wire_sub', descKey: 'pay_wire_desc' },
-  { id: 'GIFT', icon: GiftCardIcon, labelKey: 'pay_gift', subKey: 'pay_gift_sub', descKey: 'pay_gift_desc' },
+  { id: 'CRYPTO', icon: BitcoinIcon, labelKey: 'pay_crypto' },
+  { id: 'PAYPAL', icon: PayPalIcon, labelKey: 'pay_paypal' },
+  { id: 'WIRE', icon: BankIcon, labelKey: 'pay_wire' },
+  { id: 'GIFT', icon: GiftCardIcon, labelKey: 'pay_gift' },
 ];
 
 export default function HomePage() {
@@ -107,7 +107,6 @@ export default function HomePage() {
         <div className="text-center mb-10">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-crimson mb-2">{t('payment_methods_kicker')}</p>
           <h2 className="section-title">{t('payment_methods')}</h2>
-          <p className="text-moss text-sm mt-3">{t('payment_methods_sub')}</p>
         </div>
         <div className="grid grid-cols-2 gap-3 max-w-4xl mx-auto">
           {PAYMENTS.map((p) => {
@@ -118,8 +117,6 @@ export default function HomePage() {
                   <Icon size={24} className="text-pine" />
                 </div>
                 <h3 className="font-serif font-semibold text-pine mt-3 uppercase tracking-wide text-sm">{t(p.labelKey)}</h3>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-crimson mt-1">{t(p.subKey)}</p>
-                <p className="text-xs text-moss mt-2 leading-relaxed">{t(p.descKey)}</p>
               </div>
             );
           })}

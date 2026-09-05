@@ -6,13 +6,9 @@ export function BitcoinIcon({ size = 26, className = 'text-pine' }) {
   );
 }
 
-export function PayPalIcon({ size = 26, className = 'text-pine' }) {
+export function PayPalIcon({ size = 26, className = '' }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.77.77 0 0 1 .759-.656h5.765c2.583 0 4.152 1.444 4.152 3.83 0 4.341-3.054 5.833-6.692 5.833H7.632l-.95 7.964a.641.641 0 0 1-.61.646z" />
-      <path d="M21.022 9.085c-.178.114-.542.28-.96.345-.115.018-.237.03-.36.039-1.466.107-2.31-.913-2.31-2.072 0-1.242.908-2.205 2.31-2.205.945 0 1.71.517 1.79 1.786.033.357.051.83-.47 2.107z" />
-      <path d="M22.996 6.647c-.802-2.05-2.631-3.227-5.087-3.227h-5.879a.636.636 0 0 0-.63.537l-2.2 14.06a.538.538 0 0 0 .53.619h3.07a.64.64 0 0 0 .63-.537l.835-5.34h2.413c4.42 0 7.434-2.637 7.434-6.25 0-1.089-.216-2.032-.716-2.862z" />
-    </svg>
+    <span className={`${className} font-serif font-black leading-none select-none`} style={{ fontSize: Math.round(size * 0.6) }} aria-hidden="true">PP</span>
   );
 }
 

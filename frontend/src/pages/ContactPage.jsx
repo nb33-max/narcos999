@@ -1,9 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Send, Mail, MessageCircle, Bot, Clock, Loader2, ShieldAlert } from 'lucide-react';
 import { apiPost } from '../lib/api';
 import { useToast } from '../store/ToastContext.jsx';
 import { useApp } from '../store/AppContext.jsx';
-import AuthModal from '../components/AuthModal.jsx';
 import { t } from '../lib/i18n';
 import { TELEGRAM_BOT_HANDLE, telegramBotUrl } from '../lib/telegram';
 
@@ -18,7 +18,6 @@ const CATEGORIES = [
 export default function ContactPage() {
   const { toast } = useToast();
   const { user, settings } = useApp();
-  const [authOpen, setAuthOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', order_number: '', category: 'Product Inquiry', subject: '', message: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -58,10 +57,9 @@ export default function ContactPage() {
         <h1 className="font-serif text-2xl font-bold text-pine mt-4">{t('msg_gate_title')}</h1>
         <p className="text-moss text-sm mt-3">{t('msg_gate_body')}</p>
         <div className="flex flex-col gap-3 mt-6">
-          <button onClick={() => setAuthOpen(true)} className="btn-primary">{t('sign_in')}</button>
-          <button onClick={() => setAuthOpen(true)} className="btn-outline">{t('create_account')}</button>
+          <Link to="/auth?mode=signin&redirect=/contact" className="btn-primary text-center">{t('sign_in')}</Link>
+          <Link to="/auth?mode=register&redirect=/contact" className="btn-outline text-center">{t('create_account')}</Link>
         </div>
-        <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       </div>
     );
   }

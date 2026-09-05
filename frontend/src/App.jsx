@@ -5,9 +5,7 @@ import { useCart } from './store/CartContext.jsx';
 import { CartProvider } from './store/CartContext.jsx';
 import Header from './components/Header.jsx';
 import Footer from './components/Footer.jsx';
-import CartDrawer from './components/CartDrawer.jsx';
 import SearchModal from './components/SearchModal.jsx';
-import AuthModal from './components/AuthModal.jsx';
 import RestrictedPage from './pages/RestrictedPage.jsx';
 import AdminPage from './pages/AdminPage.jsx';
 import BotPanel from './pages/BotPanel.jsx';
@@ -20,6 +18,8 @@ const HomePage = lazy(() => import('./pages/HomePage.jsx'));
 const ShopPage = lazy(() => import('./pages/ShopPage.jsx'));
 const ProductPage = lazy(() => import('./pages/ProductPage.jsx'));
 const SavedPage = lazy(() => import('./pages/SavedPage.jsx'));
+const CartPage = lazy(() => import('./pages/CartPage.jsx'));
+const AuthPage = lazy(() => import('./pages/AuthPage.jsx'));
 const AccountPage = lazy(() => import('./pages/AccountPage.jsx'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage.jsx'));
 const ContactPage = lazy(() => import('./pages/ContactPage.jsx'));
@@ -27,9 +27,7 @@ const InfoPage = lazy(() => import('./pages/InfoPage.jsx'));
 
 function Shell() {
   const { availability, settings, loading, trackEvent } = useApp();
-  const [cartOpen, setCartOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
   const [ageOpen, setAgeOpen] = useState(() => !isAgeVerified());
   const location = useLocation();
 
@@ -48,7 +46,7 @@ function Shell() {
 
   return (
     <div className="min-h-screen flex flex-col pb-16 lg:pb-0">
-      <Header onOpenCart={() => setCartOpen(true)} onOpenSearch={() => setSearchOpen(true)} onOpenAuth={() => setAuthOpen(true)} />
+      <Header onOpenSearch={() => setSearchOpen(true)} />
       <main className="flex-1">
         <Suspense fallback={<LoadingScreen />}>
           <Routes>
@@ -56,6 +54,8 @@ function Shell() {
             <Route path="/shop" element={<ShopPage />} />
             <Route path="/product/:slug" element={<ProductPage />} />
             <Route path="/saved" element={<SavedPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/auth" element={<AuthPage />} />
             <Route path="/account" element={<AccountPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/contact" element={<ContactPage />} />
@@ -68,11 +68,9 @@ function Shell() {
         </Suspense>
       </main>
       <Footer />
-      <MobileNav onOpenCart={() => setCartOpen(true)} onOpenAuth={() => setAuthOpen(true)} />
-      <FloatingMessage onOpenAuth={() => setAuthOpen(true)} />
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
+      <MobileNav />
+      <FloatingMessage />
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
       <AgeVerificationModal open={ageOpen} onVerify={() => setAgeOpen(false)} />
     </div>
   );

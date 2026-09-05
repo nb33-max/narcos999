@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Mail, MessageCircle, ShieldCheck, Lock, RefreshCw, PackageCheck, CreditCard, Zap, Receipt, BadgePercent } from 'lucide-react';
 import { useApp } from '../store/AppContext.jsx';
 import { t } from '../lib/i18n';
+import { BitcoinIcon, PayPalIcon, BankIcon, GiftCardIcon } from '../components/PaymentIcons.jsx';
 
 const FAQ_ITEMS = [
   { qKey: 'faq1_q', aKey: 'faq1_a' },
@@ -15,10 +16,10 @@ const FAQ_ITEMS = [
 ];
 
 const PAYMENT_METHODS = [
-  { name: 'CRYPTO', labelKey: 'pay_crypto', descKey: 'pay_info_crypto' },
-  { name: 'PAYPAL', labelKey: 'pay_paypal', descKey: 'pay_info_paypal' },
-  { name: 'WIRE', labelKey: 'pay_wire', descKey: 'pay_info_wire' },
-  { name: 'GIFT', labelKey: 'pay_gift', descKey: 'pay_info_gift' },
+  { id: 'CRYPTO', labelKey: 'pay_crypto', icon: BitcoinIcon },
+  { id: 'PAYPAL', labelKey: 'pay_paypal', icon: PayPalIcon },
+  { id: 'WIRE', labelKey: 'pay_wire', icon: BankIcon },
+  { id: 'GIFT', labelKey: 'pay_gift', icon: GiftCardIcon },
 ];
 
 const PAYMENT_FEATURES = [
@@ -89,15 +90,17 @@ export default function InfoPage({ type }) {
       {type === 'payments' && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-3">
-            {PAYMENT_METHODS.map((p) => (
-              <div key={p.name} className="card p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="border border-stone rounded-lg px-2.5 py-1 text-[11px] font-bold tracking-wider text-pine">{p.name}</span>
-                  <span className="text-sm font-semibold text-pine">{t(p.labelKey)}</span>
+            {PAYMENT_METHODS.map((p) => {
+              const Icon = p.icon;
+              return (
+                <div key={p.id} className="card p-5 text-center">
+                  <div className="mx-auto w-12 h-12 bg-subcard rounded-full flex items-center justify-center">
+                    <Icon size={24} className="text-pine" />
+                  </div>
+                  <h3 className="font-serif font-semibold text-pine mt-3 uppercase tracking-wide text-sm">{t(p.labelKey)}</h3>
                 </div>
-                <p className="text-xs text-moss leading-relaxed">{t(p.descKey)}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {PAYMENT_FEATURES.map(({ icon: Icon, titleKey, descKey }) => (

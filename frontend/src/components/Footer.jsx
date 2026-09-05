@@ -15,7 +15,7 @@ export default function Footer() {
   const { settings } = useApp();
   return (
     <footer className="bg-pine text-canvas/90 mt-20">
-      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-10">
+      <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-10">
         <div className="col-span-2 lg:col-span-1">
           <div className="flex items-center gap-3">
             <span className="w-9 h-9 bg-canvas/10 border border-canvas/20 flex items-center justify-center font-serif font-bold text-sm">NB</span>
@@ -30,7 +30,6 @@ export default function Footer() {
           <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-xs text-canvas/60 hover:text-canvas transition-colors">
             <Bot size={13} /> {t('telegram_bot_chat')}
           </a>
-          <p className="mt-6 text-xs text-canvas/50">{t('rights_reserved').replace('{year}', '2026').replace('{store}', settings?.store_name || 'NARCOS BAY')}</p>
         </div>
 
         <div>
@@ -54,17 +53,21 @@ export default function Footer() {
             <li><Link to="/privacy" className="hover:text-canvas transition-colors">{t('privacy')}</Link></li>
           </ul>
         </div>
+      </div>
 
-        <div className="col-span-2 lg:col-span-1">
-          <h4 className="text-xs font-bold uppercase tracking-[0.18em] text-canvas mb-4">{t('footer_payments')}</h4>
-          <div className="grid grid-cols-2 gap-2">
-            {PAYMENTS.map((p) => (
-              <span key={p.name} title={t(p.labelKey)} className="border border-canvas/20 rounded-lg px-3 py-2 text-[11px] font-bold tracking-wider text-canvas/80 text-center">
-                {p.name}
-              </span>
-            ))}
+      <div className="border-t border-canvas/15">
+        <div className="max-w-7xl mx-auto px-4 py-6 flex flex-col items-center text-center gap-5">
+          <p className="text-xs text-canvas/50">{t('rights_reserved').replace('{year}', '2026').replace('{store}', settings?.store_name || 'NARCOS BAY')}</p>
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.18em] text-canvas/70 mb-3">{t('footer_payments')}</h4>
+            <div className="flex flex-wrap justify-center gap-2">
+              {PAYMENTS.map((p) => (
+                <span key={p.name} title={t(p.labelKey)} className="border border-canvas/20 rounded-lg px-3 py-2 text-[11px] font-bold tracking-wider text-canvas/80 text-center">
+                  {p.name}
+                </span>
+              ))}
+            </div>
           </div>
-          <p className="mt-4 text-xs text-canvas/50">{t('crypto_priority_note')}</p>
         </div>
       </div>
     </footer>

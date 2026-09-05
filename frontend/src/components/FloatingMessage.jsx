@@ -5,14 +5,14 @@ import { useApp } from '../store/AppContext';
 import { t } from '../lib/i18n';
 import { telegramBotUrl } from '../lib/telegram';
 
-export default function FloatingMessage({ onOpenAuth }) {
+export default function FloatingMessage() {
   const { user, settings } = useApp();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const handleClick = () => {
     if (!user) {
-      onOpenAuth();
+      navigate('/auth?redirect=/contact');
       return;
     }
     navigate('/contact');

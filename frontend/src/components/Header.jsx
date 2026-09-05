@@ -12,8 +12,8 @@ const NAV = [
   { key: 'new_arrivals', href: '/shop?new_arrival=true' },
 ];
 
-export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
-  const { settings, cms, user, lang, changeLanguage, notifications, unreadCount, markNotificationsRead } = useApp();
+export default function Header({ onOpenSearch }) {
+  const { settings, cms, user, lang, changeLanguage, unreadCount } = useApp();
   const { count } = useCart();
   const navigate = useNavigate();
   const [langOpen, setLangOpen] = useState(false);
@@ -74,17 +74,16 @@ export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
               <Search size={18} />
             </button>
 
-            <button onClick={onOpenCart} className="relative p-2 text-pine hover:text-crimson transition-colors" aria-label={t('aria_cart')}>
+            <Link to="/cart" className="relative p-2 text-pine hover:text-crimson transition-colors" aria-label={t('aria_cart')}>
               <ShoppingBag size={18} />
               {count > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-crimson text-canvas text-[9px] font-bold rounded-full flex items-center justify-center">{count}</span>
               )}
-            </button>
+            </Link>
 
             {user && (
               <Link
-                to="/account?tab=orders"
-                onClick={() => unreadCount > 0 && markNotificationsRead()}
+                to="/account?tab=notifications"
                 className="relative p-2 text-pine hover:text-crimson transition-colors"
                 aria-label={t('aria_notifications')}
               >
@@ -96,7 +95,7 @@ export default function Header({ onOpenCart, onOpenSearch, onOpenAuth }) {
             )}
 
             <button
-              onClick={() => (user ? navigate('/account') : onOpenAuth())}
+              onClick={() => (user ? navigate('/account') : navigate('/auth'))}
               className="p-2 text-pine hover:text-crimson transition-colors"
               aria-label={t('aria_account')}
             >
