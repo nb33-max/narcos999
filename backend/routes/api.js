@@ -119,6 +119,59 @@ router.post('/auth/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+// ---------- Google OAuth (config-driven; disabled until GOOGLE_CLIENT_ID is set) ----------
+router.get('/auth/config', (req, res) => {
+  res.json({ google_client_id: process.env.GOOGLE_CLIENT_ID || null });
+});
+
+router.post('/auth/google', asyncHandler(async (req, res) => {
+  const { id_token } = req.body || {};
+  if (!id_token) return res.status(400).json({ error: 'Missing id_token' });
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) return res.status(503).json({ error: 'Google sign-in is not configured' });
+
+  let info;
+  try {
+    const r = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(id_token)}`);
+    if (!r.ok) return res.status(401).json({ error: 'Invalid Google token' });
+    info = await r.json();
+  } catch {
+    return res.status(502).json({ error: 'Unable to verify Google token' });
+  }
+
+  if (info.aud !== clientId) return res.status(401).json({ error: 'Google token audience mismatch' });
+  const email = (info.email || '').toLowerCase();
+  if (!email || !info.email_verified) return res.status(401).json({ error: 'Unverified Google account' });
+
+  let { data: user } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
+  if (!user) {
+    const id = uid();
+    const { data, error } = await supabase.from('users').insert({
+      id,
+      email,
+      full_name: (info.name || '').trim() || email.split('@')[0],
+      role: 'CUSTOMER',
+      status: 'ACTIVE',
+      created_at: now(),
+    }).select('*').single();
+    if (error) {
+      if (isUniqueViolation(error)) {
+        const { data: dup } = await supabase.from('users').select('*').eq('email', email).maybeSingle();
+        if (dup) user = dup;
+        else throw error;
+      } else {
+        throw error;
+      }
+    } else {
+      user = data;
+    }
+  }
+  if (user.status === 'SUSPENDED') return res.status(403).json({ error: 'Account suspended' });
+
+  const token = signToken(user.id);
+  res.json({ token, user: publicUser(user) });
+}));
+
 // ---------- Health ----------
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: now(), version: '1.0.0' });
