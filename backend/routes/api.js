@@ -817,8 +817,12 @@ router.post('/telegram/set-webhook', requireAdmin, asyncHandler(async (req, res)
 router.get('/telegram/status', requireAdmin, async (req, res) => {
   try {
     const [users, webhook] = await Promise.all([listTelegramUsers(), getWebhookInfo()]);
+    // On serverless the in-memory controller state is per-cold-start and can
+    // report 'stopped' even when the webhook is registered and reachable.
+    // Treat a reachable registered webhook (valid token + set URL) as online.
+    const reachable = !!(webhook && webhook.ok && webhook.url);
     res.json({
-      status: telegramController.status,
+      status: reachable ? 'running' : (telegramController.status || 'stopped'),
       username: telegramController.username,
       error: telegramController.error,
       last_start: telegramController.lastStart,
