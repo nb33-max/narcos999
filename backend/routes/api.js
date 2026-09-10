@@ -10,7 +10,7 @@ import {
   listOrderComments, addOrderComment,
   createTelegramLink, getTelegramUserBySiteUser,
 } from '../db/local.js';
-import { telegramController, processUpdate, setupWebhook, getWebhookInfo, getBotUsername, sendToChat, notifyOrderStatus } from '../telegram/bot.js';
+import { telegramController, processUpdate, setupWebhook, getWebhookInfo, getBotUsername, sendToChat, notifyOrderStatus, replaceBot, getBotConfig } from '../telegram/bot.js';
 import { signToken } from '../lib/auth.js';
 
 const router = Router();
@@ -807,6 +807,30 @@ router.post('/telegram/webhook', asyncHandler(async (req, res) => {
   res.json(result);
 }));
 
+// Keep the storefront's "chat with us on Telegram" link pointing at the
+// currently active bot, so a replacement needs no frontend change.
+async function syncPublicBotUrl(username) {
+  if (!username) return;
+  try {
+    const row = await getSettingRow('site_settings', 'global_settings');
+    const data = { ...(row?.data || {}), telegram_bot_url: `https://t.me/${username}`, telegram_bot_handle: username };
+    await supabase.from('site_settings').update({ data: JSON.stringify(data), updated_at: now() }).eq('id', 'global_settings');
+  } catch {}
+}
+
+// Replace a deleted bot with a new one at runtime: validate the token, store it
+// (DB overrides env), register the webhook and refresh the public bot link.
+router.post('/telegram/replace-bot', requireAdmin, asyncHandler(async (req, res) => {
+  const { token, admin_id, webhook_url } = req.body || {};
+  if (!token || !String(token).includes(':')) return res.status(400).json({ error: 'A valid bot token is required' });
+  const result = await replaceBot({ token, adminId: admin_id });
+  if (!result.ok) return res.status(400).json(result);
+  const base = (webhook_url || '').trim() || `https://${req.get('host')}`;
+  const webhook = await setupWebhook(base);
+  await syncPublicBotUrl(result.username);
+  res.json({ ok: true, username: result.username, webhook });
+}));
+
 router.post('/telegram/set-webhook', requireAdmin, asyncHandler(async (req, res) => {
   const { url } = req.body || {};
   const base = (url || '').trim() || `https://${req.get('host')}`;
@@ -816,17 +840,18 @@ router.post('/telegram/set-webhook', requireAdmin, asyncHandler(async (req, res)
 
 router.get('/telegram/status', requireAdmin, async (req, res) => {
   try {
-    const [users, webhook] = await Promise.all([listTelegramUsers(), getWebhookInfo()]);
+    const [users, webhook, bot] = await Promise.all([listTelegramUsers(), getWebhookInfo(), getBotConfig()]);
     // On serverless the in-memory controller state is per-cold-start and can
     // report 'stopped' even when the webhook is registered and reachable.
     // Treat a reachable registered webhook (valid token + set URL) as online.
     const reachable = !!(webhook && webhook.ok && webhook.url);
     res.json({
       status: reachable ? 'running' : (telegramController.status || 'stopped'),
-      username: telegramController.username,
+      username: bot.username || telegramController.username,
       error: telegramController.error,
       last_start: telegramController.lastStart,
       user_count: users.length,
+      bot,
       webhook,
     });
   } catch (e) {

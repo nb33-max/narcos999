@@ -79,6 +79,27 @@ one source) - this is expected.
 You can also (re)register the webhook from the web admin: `POST
 /api/telegram/set-webhook` (admin token) with `{ "url": "https://narcosbay.store" }`.
 
+## 5b. Replacing a deleted bot (no redeploy)
+
+Telegram can delete a bot account. When that happens you do **not** need to
+change code or environment variables:
+
+1. Create a new bot in @BotFather, copy its token.
+2. Open the site's admin **Bot Panel** (`/admin/bot`) -> **Bot Identity — Replace Bot**.
+3. Paste the new token (and optionally a new admin Telegram ID) and click
+   **Connect / Replace bot**.
+4. That one action validates the token via `getMe`, stores it in the
+   Supabase `telegram_config` table (which overrides `TELEGRAM_BOT_TOKEN`),
+   registers the webhook against the current domain, and repoints the
+   storefront's Telegram link at the new bot.
+
+Run `supabase/migration_telegram_config.sql` once in the Supabase SQL Editor
+before using this (RLS is enabled with no public policy, so only the backend
+service key can read the token — make sure `SUPABASE_SERVICE_KEY` is set).
+
+Existing site<->Telegram links are kept: stored `telegram_id`s are Telegram
+*user* IDs, so users just need to `/start` the new bot once.
+
 ## 6. Custom domain (e.g. NARCOSBAY.store)
 
 You must **buy** the domain yourself (registrars: Cloudflare, Porkbun,

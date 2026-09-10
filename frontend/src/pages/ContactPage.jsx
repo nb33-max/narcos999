@@ -5,7 +5,7 @@ import { apiPost } from '../lib/api';
 import { useToast } from '../store/ToastContext.jsx';
 import { useApp } from '../store/AppContext.jsx';
 import { t } from '../lib/i18n';
-import { TELEGRAM_BOT_HANDLE, telegramBotUrl } from '../lib/telegram';
+import { telegramBotUrl, telegramBotHandle } from '../lib/telegram';
 
 const CATEGORIES = [
   { value: 'Product Inquiry', key: 'subj_product' },
@@ -109,7 +109,7 @@ export default function ContactPage() {
             <a href={telegramBotUrl(settings)} target="_blank" rel="noreferrer" className="flex items-start gap-3 py-2.5 border-b border-stone/50 text-sm font-semibold text-pine hover:text-crimson">
               <Bot size={16} className="text-crimson mt-0.5" />
               <span>
-                @{TELEGRAM_BOT_HANDLE}
+                @{telegramBotHandle(settings)}
                 <span className="block text-[10px] font-semibold uppercase tracking-wider text-moss mt-0.5">{t('ch_bot')}</span>
               </span>
             </a>

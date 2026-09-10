@@ -1,6 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Send, User, Activity, RefreshCw, Loader2, ShieldCheck, LogOut, Lock, ArrowLeft } from 'lucide-react';
+import { Bot, Send, User, Activity, RefreshCw, Loader2, ShieldCheck, LogOut, Lock, ArrowLeft, KeyRound } from 'lucide-react';
 import { useApp } from '../store/AppContext.jsx';
 import { useToast } from '../store/ToastContext.jsx';
 import { apiGet, apiPost } from '../lib/api';
@@ -38,6 +38,9 @@ function BotPanelBody() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [webhookBusy, setWebhookBusy] = useState(false);
+  const [token, setToken] = useState('');
+  const [adminId, setAdminId] = useState('');
+  const [replacing, setReplacing] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -56,6 +59,21 @@ function BotPanelBody() {
       else toast(res.error || 'Webhook failed', 'error');
     } catch { toast('Webhook request failed', 'error'); }
     finally { setWebhookBusy(false); }
+  };
+
+  const replaceBot = async () => {
+    if (!token.trim()) { toast('Paste the new bot token', 'error'); return; }
+    if (!window.confirm('Replace the active Telegram bot with this token? The webhook and storefront link will be updated.')) return;
+    setReplacing(true);
+    try {
+      const res = await apiPost('/telegram/replace-bot', { token: token.trim(), admin_id: adminId.trim() || undefined });
+      if (res.ok) {
+        toast(`Bot @${res.username} connected`, 'success');
+        setToken(''); setAdminId('');
+        await load();
+      } else toast(res.error || 'Could not connect bot', 'error');
+    } catch { toast('Replace bot request failed', 'error'); }
+    finally { setReplacing(false); }
   };
 
   const send = async () => {
@@ -117,6 +135,40 @@ function BotPanelBody() {
               <p className="text-[11px] text-moss mt-1">{status?.last_start?.slice(0, 10) || 'never'}</p>
             </div>
             <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#F59E0B' + '14', color: '#F59E0B' }}><Send size={18} /></div>
+          </div>
+        </div>
+
+        <div className="card p-5 mt-5">
+          <h3 className="field-heading flex items-center gap-2"><KeyRound size={15} className="text-crimson" /> Bot Identity — Replace Bot</h3>
+          <p className="text-[11px] text-moss mb-3">
+            If the Telegram bot account is deleted, create a new bot with @BotFather and paste its token here.
+            The token is stored in Supabase and overrides the environment variable, so no redeploy is needed.
+            The webhook and the storefront link update automatically.
+          </p>
+          <div className="bg-subcard rounded-lg p-4 space-y-1 text-sm">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-moss">Active Bot</span>
+              {status?.bot?.configured
+                ? <span className="pill bg-emerald-500/10 text-emerald-600"><Bot size={11} /> @{status?.bot?.username || status?.username || '?'}</span>
+                : <span className="pill bg-red-500/10 text-red-600">NOT CONFIGURED</span>}
+            </div>
+            <p className="text-[11px] text-moss">Token source: <span className="font-bold text-pine uppercase">{status?.bot?.source || 'env'}</span></p>
+            {status?.bot?.admin_id && <p className="text-[11px] text-moss">Admin ID: <span className="font-mono text-pine">{status.bot.admin_id}</span></p>}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+            <div className="md:col-span-2">
+              <label className="label">New Bot Token (from @BotFather)</label>
+              <input className="input font-mono" value={token} onChange={(e) => setToken(e.target.value)} placeholder="123456789:AA..." autoComplete="off" />
+            </div>
+            <div>
+              <label className="label">Admin Telegram ID (optional)</label>
+              <input className="input font-mono" value={adminId} onChange={(e) => setAdminId(e.target.value)} placeholder="keep current" />
+            </div>
+            <div className="flex items-end">
+              <button onClick={replaceBot} disabled={replacing || !token.trim()} className="btn-primary !py-2.5">
+                {replacing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} CONNECT / REPLACE BOT
+              </button>
+            </div>
           </div>
         </div>
 

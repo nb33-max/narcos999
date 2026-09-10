@@ -4,11 +4,9 @@ import { supabase, now, parseJson, shapeProduct } from '../db/supabase.js';
 import {
   upsertTelegramUser, setTelegramUserLang, listTelegramUsers, logBroadcast,
   consumeTelegramLink, setTelegramUserSiteUser,
+  getTelegramConfig, saveTelegramConfig,
 } from '../db/local.js';
 import { tLang, interpolateLang, LANGS } from '../../frontend/src/lib/i18n.js';
-
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const ADMIN_ID = process.env.TELEGRAM_ADMIN_ID ? String(process.env.TELEGRAM_ADMIN_ID) : null;
 
 export const telegramController = {
   bot: null,
@@ -22,16 +20,58 @@ const PAGE_SIZE = 5;
 const state = new Map();
 
 let bot = null;
+let botToken = null;
 let webhookRegistered = false;
 
-// Lazily create the bot. In webhook/serverless mode there is no long-polling
-// loop; outgoing calls (sendMessage, editMessageText, ...) still work because
-// they are plain HTTPS requests to the Telegram API.
+// Resolved bot identity. The DB row (set from the admin Bot Panel) wins over
+// env vars, so a deleted bot can be swapped at runtime without a redeploy.
+let configCache = null;
+
+async function loadConfig(force = false) {
+  if (configCache && !force) return configCache;
+  let db = null;
+  try { db = await getTelegramConfig(); } catch {}
+  const envToken = (process.env.TELEGRAM_BOT_TOKEN || '').trim();
+  const token = (db?.token || envToken || '').trim() || null;
+  const envAdmin = process.env.TELEGRAM_ADMIN_ID ? String(process.env.TELEGRAM_ADMIN_ID) : '';
+  configCache = {
+    token,
+    username: db?.username || null,
+    admin_id: (db?.admin_id || envAdmin || '').toString().trim() || null,
+    source: db?.token ? 'database' : (envToken ? 'env' : 'missing'),
+  };
+  return configCache;
+}
+
+function getToken() {
+  return configCache?.token || (process.env.TELEGRAM_BOT_TOKEN || '').trim() || null;
+}
+
+function getAdminId() {
+  return configCache?.admin_id || (process.env.TELEGRAM_ADMIN_ID ? String(process.env.TELEGRAM_ADMIN_ID) : null);
+}
+
+// Lazily create the bot and rebuild it whenever the active token changes. In
+// webhook/serverless mode there is no long-polling loop; outgoing calls
+// (sendMessage, editMessageText, ...) still work over plain HTTPS.
 function getBot() {
-  if (!bot) {
-    bot = new TelegramBot(TOKEN);
+  const token = getToken();
+  if (!bot || botToken !== token) {
+    bot = token ? new TelegramBot(token) : null;
+    botToken = token;
   }
   return bot;
+}
+
+// Safe, token-free view of the active bot identity for the admin dashboard.
+export async function getBotConfig() {
+  await loadConfig();
+  return {
+    source: configCache.source,
+    username: configCache.username || telegramController.username || null,
+    admin_id: configCache.admin_id,
+    configured: Boolean(configCache.token),
+  };
 }
 
 const MENU_KEYS = {
@@ -393,7 +433,8 @@ async function showContact(bot, chatId, lang) {
 
 // ---------- admin screens ----------
 async function isAdmin(chatId) {
-  return ADMIN_ID && String(chatId) === ADMIN_ID;
+  const adminId = getAdminId();
+  return adminId && String(chatId) === adminId;
 }
 
 async function showAdminPanel(bot, chatId) {
@@ -630,6 +671,7 @@ async function handleCallback(bot, query) {
 async function broadcastMessage(text, fromChatId) {
   const users = await listTelegramUsers();
   if (!text) return;
+  await loadConfig();
   const b = getBot();
   let sent = 0;
   let failed = 0;
@@ -653,7 +695,9 @@ async function broadcastMessage(text, fromChatId) {
 // ---------- startup (long-polling, local dev only) ----------
 export async function startTelegramBot() {
   telegramController.lastStart = now();
-  if (!TOKEN) {
+  await loadConfig(true);
+  const token = getToken();
+  if (!token) {
     telegramController.status = 'disabled';
     telegramController.error = 'TELEGRAM_BOT_TOKEN missing in backend/.env';
     console.error('[telegram] ' + telegramController.error);
@@ -663,7 +707,8 @@ export async function startTelegramBot() {
     try { telegramController.bot.stopPolling(); } catch {}
   }
   settingsCache = await getSettings();
-  bot = new TelegramBot(TOKEN, { polling: { params: { timeout: 30 } } });
+  bot = new TelegramBot(token, { polling: { params: { timeout: 30 } } });
+  botToken = token;
   telegramController.bot = bot;
   telegramController.status = 'starting';
   try {
@@ -692,7 +737,8 @@ export async function startTelegramBot() {
 // Register the webhook with Telegram. Call once per environment, e.g. via the
 // "npm run bot:webhook -- <public_base_url>" script after deploying.
 export async function setupWebhook(url) {
-  if (!TOKEN) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
+  await loadConfig();
+  if (!getToken()) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
   const b = getBot();
   const clean = String(url || '').replace(/\/+$/, '');
   if (!clean) {
@@ -722,10 +768,42 @@ export async function setupWebhook(url) {
   }
 }
 
+// Adopt a brand-new bot token at runtime. Used from the admin Bot Panel after
+// the previous bot account was deleted; no redeploy required.
+export async function replaceBot({ token, adminId } = {}) {
+  const clean = String(token || '').trim();
+  if (!/^\d+:[\w-]+$/.test(clean)) {
+    return { ok: false, error: 'Invalid bot token format (expected 123456:ABC...)' };
+  }
+  let me;
+  try {
+    me = await new TelegramBot(clean).getMe();
+  } catch (e) {
+    return { ok: false, error: e?.message || 'Telegram rejected this token' };
+  }
+  try {
+    await saveTelegramConfig({ token: clean, username: me.username || null, admin_id: adminId ?? null });
+  } catch (e) {
+    return { ok: false, error: 'Could not save bot config: ' + (e?.message || 'unknown error') };
+  }
+  configCache = null;
+  bot = null;
+  botToken = null;
+  webhookRegistered = false;
+  settingsCache = null;
+  await loadConfig(true);
+  telegramController.username = me.username || null;
+  telegramController.status = 'running';
+  telegramController.error = null;
+  telegramController.lastStart = now();
+  return { ok: true, username: me.username || null, id: me.id };
+}
+
 // Process a single Telegram update pushed by the webhook. This mirrors the
 // message/callback handlers that run under long-polling in local dev.
 export async function processUpdate(update) {
-  if (!TOKEN) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
+  await loadConfig();
+  if (!getToken()) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
   const b = getBot();
   if (!settingsCache) settingsCache = await getSettings();
   if (!webhookRegistered) {
@@ -751,6 +829,7 @@ telegramController.getUsers = listTelegramUsers;
 
 // ---------- Web-facing helpers (admin panel + order notifications) ----------
 export async function getBotUsername() {
+  await loadConfig();
   if (telegramController.username) return telegramController.username;
   try {
     const me = await getBot().getMe();
@@ -762,9 +841,11 @@ export async function getBotUsername() {
 }
 
 export async function getWebhookInfo() {
-  if (!TOKEN) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
+  await loadConfig();
+  const token = getToken();
+  if (!token) return { ok: false, error: 'TELEGRAM_BOT_TOKEN missing' };
   try {
-    const r = await fetch(`https://api.telegram.org/bot${TOKEN}/getWebhookInfo`);
+    const r = await fetch(`https://api.telegram.org/bot${token}/getWebhookInfo`);
     const j = await r.json();
     return j.ok ? { ok: true, ...(j.result || {}) } : { ok: false, error: j.description };
   } catch (e) {
@@ -773,7 +854,8 @@ export async function getWebhookInfo() {
 }
 
 export async function sendToChat(chatId, text) {
-  if (!TOKEN || !chatId || !text) return { ok: false };
+  await loadConfig();
+  if (!getToken() || !chatId || !text) return { ok: false };
   try {
     await getBot().sendMessage(String(chatId), text, { parse_mode: 'Markdown' });
     return { ok: true };

@@ -231,6 +231,15 @@ CREATE TABLE IF NOT EXISTS homepage_cms (
   updated_at timestamptz DEFAULT now()
 );
 
+-- ---------- 13. Recoverable Telegram bot config (token is a secret) ----------
+CREATE TABLE IF NOT EXISTS telegram_config (
+  id text PRIMARY KEY DEFAULT 'bot',
+  token text,
+  username text,
+  admin_id text,
+  updated_at timestamptz DEFAULT now()
+);
+
 -- ---------- Indexes ----------
 CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug);
@@ -267,6 +276,9 @@ ALTER TABLE visitor_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE analytics_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE homepage_cms ENABLE ROW LEVEL SECURITY;
+-- telegram_config holds the bot token: RLS on, and deliberately NO anon
+-- policy, so only the service-role key used by the backend can access it.
+ALTER TABLE telegram_config ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "full_anon" ON users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "full_anon" ON categories FOR ALL USING (true) WITH CHECK (true);

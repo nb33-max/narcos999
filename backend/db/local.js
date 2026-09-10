@@ -232,6 +232,28 @@ export async function listBroadcasts() {
   return data || [];
 }
 
+// ---------- Telegram bot config (recoverable identity) ----------
+// Single row (id='bot') holding the active bot token/identity so a deleted
+// bot can be replaced at runtime. Falls back to env vars when absent.
+export async function getTelegramConfig() {
+  const { data, error } = await supabase.from('telegram_config').select('*').eq('id', 'bot').maybeSingle();
+  if (error) return null;
+  return data || null;
+}
+
+export async function saveTelegramConfig({ token, username, admin_id }) {
+  const row = {
+    id: 'bot',
+    token: token || null,
+    username: username || null,
+    admin_id: admin_id === null || admin_id === undefined ? null : String(admin_id),
+    updated_at: now(),
+  };
+  const { data, error } = await supabase.from('telegram_config').upsert(row, { onConflict: 'id' }).select('*').single();
+  if (error) throw error;
+  return data;
+}
+
 // ---------- Notifications (in-app) ----------
 export async function listNotifications(userId, limit = 50) {
   const { data } = await supabase
